@@ -3,8 +3,9 @@
 **Live:** https://climbup-planner.vercel.app
 
 A daily task and study planner built around one idea: **you should be able to see yourself falling behind.**
-Open it in the morning, see today split into Morning / Office / Evening, work down the ranked
-list, review the day, and watch the backlog pile build if you don't.
+Set a monthly target, break it into weekly, break those into daily, then open Today and drag
+the day into the order you'll actually do it. Review the day, and watch the backlog build if
+you don't.
 
 Single self-contained page. No build step, no dependencies, no server.
 
@@ -96,24 +97,77 @@ no one can enumerate accounts.
 | `icon-192.png` / `icon-512.png` | App icons (the ClimbUp bamboo mark) |
 | `vercel.json` | Cache and security headers for the Vercel deploy |
 
-## What works
+## The model
 
-- **Today** — tasks grouped by time block, ranked inside each block. The top undone item is
-  badged *Do first*, high-priority *Must do*, low *Skip if short*. Carried-over work floats up.
-- **Capacity** — each block has a minute budget. Overshoot it and the app says so before you start.
-- **Fixed appointments** — a task with a clock time anchors its block and never rolls over.
-- **Backlog** — every carried item can go to today, batch onto the weekend, or be dropped.
-  Shows what clearing it actually costs in evenings.
-- **Pace** — hours needed per day against your real average, projected against the exam date.
-- **Review the day** — tag what slipped and why, then choose tomorrow or the weekend.
-  Reasons feed the Week screen.
-- **Week** — completion, hours, streak, planned-vs-done bars, subject balance, slip reasons.
-- **Streak + freeze** — two freeze days a month so one bad day doesn't erase the run.
-- **Revision** — concept cards with your own formula images, spaced 1 → 3 → 7 → 21 → 45 days.
-  An active-recall popup interrupts you on a set frequency: *recall it*, then reveal the image.
-  Suppressed during appointments and focus sessions, capped daily.
-- **Focus timer** — records actual time against your estimate.
-- **Settings** — office days, block capacities, reminder time, notifications, dark theme.
+One task type at three zooms, not three separate things:
+
+```
+month task  ──breaks into──▶  week task  ──breaks into──▶  day task
+                                                            └─ lands in a session
+```
+
+Every task carries a `scope` (`month` | `week` | `day`) and a `parent`. A day
+task additionally has a `block` — which session of the day it sits in. So
+"monthly targets broken into weekly, broken into daily" and "weekly and monthly
+tasks I can organise" are the same list at a different zoom, which is why one
+drag implementation orders all three and there is no second hierarchy to keep in
+sync. Deleting a parent takes its whole subtree with it.
+
+Goals sit alongside, not above: a goal is a name and a deadline, and any task at
+any scope can be tagged to one. Progress is just the share of its tagged tasks
+that are done.
+
+## Screens
+
+- **Dashboard** — the home page. Today's completion, what to improve, where the
+  day goes session by session, planned-vs-done for the week, streak and freezes,
+  plan counts, weakest recall, slip reasons. Every line of advice is derived
+  from data you actually entered; with an empty account it says so instead of
+  inventing numbers.
+- **Today** — that day's tasks only, grouped into Morning / Noon / Evening,
+  **press and hold to drag into the order you want to do them**. Capacity bar
+  per session, fixed appointments, backlog, review-the-day.
+- **Plan** — Month and Week tabs. Same drag-to-order, plus *Break into weekly* /
+  *Break into daily*, and each parent shows its children inline.
+- **Revise** — topic groups, each holding image cards with their own headings.
+  *Revise all* walks a whole group in one pass rather than interrupting one card
+  at a time. Intervals stretch 1 → 3 → 7 → 21 → 45 days.
+- **Settings** — your available hours per session (capacity is the span between
+  them), office days, notifications, recall frequency, theme, erase everything.
+
+## Ordering, and why priority no longer sorts
+
+`order` is the only thing that ranks tasks within a list, and drag is the only
+thing that writes it. Priority still picks the badge a row wears (*Do first*,
+*Must do*, *Skip if short*) but it does **not** re-sort — an automatic rank that
+silently overrode a drag would make the gesture feel broken. Appointments stay
+pinned first in clock order and finished tasks sink to the bottom regardless,
+which is why neither is draggable.
+
+The drag is delegated from the document and keyed on `data-list` / `data-id`, so
+it survives re-renders without per-row refs, and it never calls `setState` until
+the finger lifts — a render mid-gesture would rebuild the rows and strip the
+transforms it is driving. `_dragging` holds the clock and recall timers still
+while it runs.
+
+## Images
+
+Attaching a formula opens a cropper: pan and pinch under a fixed square frame,
+and only the framed region is drawn to a canvas on save, so what is stored is
+the crop you chose rather than the whole photo. Two things there are easy to
+get wrong and are deliberate:
+
+1. The `<img>` is `pointer-events:none`. Dragging an image starts Chrome's
+   native image drag, which fires `pointercancel` and kills the gesture after
+   two moves.
+2. The gesture handlers are on the document, not the frame. Bound to the frame
+   they are lost after one move — every move sets state, and the re-render can
+   hand back a different DOM node.
+
+Images live in `localStorage` under `sp.cardImages` and are **stripped from the
+Firebase payload** before every save; megabytes of base64 have no business in a
+realtime sync. They are re-attached by card id on load, so they do not follow
+you to another device.
 
 ## Layout — phone vs desktop
 
@@ -197,9 +251,12 @@ by the template alone and the app boots blank trying to reach unpkg.com.
 
 1. **State syncs to Firebase, and only while signed in.** Google sign-in gates the app; the
    keys in `PERSIST_KEYS` are debounced to Realtime Database under `users/<uid>` and read back
-   on load. Signed out there is no persistence at all, and the formula images are the one thing
-   that never leaves the device — they stay in `localStorage` under `sp.cardImages`, so they do
-   not follow you to another phone.
+   on load. Signed out there is no persistence at all.
+   `SCHEMA` guards the shape: `loadCloud` **discards** anything stored under a different
+   version rather than migrating it. Bump it when the state shape changes — that is also what
+   cleared the old demo seed out of accounts that had already saved it. Note Firebase stores no
+   empty arrays or objects at all (it deletes the key), so anything the user has legitimately
+   emptied comes back missing and is refilled from `freshState()` on load.
    *(Note: `componentDidUpdate` is called by the DC runtime with `prevProps` only — there is no
    `prevState` argument. Comparing against one throws inside a runtime `try/catch`, which
    silently disables the save. Track previous values yourself; see the comment on that method.)*
@@ -207,8 +264,9 @@ by the template alone and the app boots blank trying to reach unpkg.com.
    is alive. An installed PWA can notify while backgrounded on Android; iOS is stricter. Real
    scheduled alarms need a server pushing to a native app or Web Push with a subscription —
    `sw.js` already handles `notificationclick`, so the client half is ready.
-3. **Seed data is hard-coded** in the component's constructor (`tasks`, `backlog`, `cards`,
-   `week`, `subjects`, `goals`) — that is the shape a real data layer needs to produce.
+3. **There is no seed data.** A new account starts genuinely empty and every screen has an
+   empty state. Nothing in the render path may assume a non-empty array — that was the whole
+   class of crash when the demo data came out.
 4. **Dates are simulated.** `day` is a counter and `examDays` is a constant; there is no real
    calendar. Wire to actual dates before trusting the pace maths.
 5. **The exam pace figure** assumes goal progress is measured in hours. Adjust if you track
