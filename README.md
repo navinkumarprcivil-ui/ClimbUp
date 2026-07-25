@@ -85,6 +85,55 @@ the real boxes would reflow rows tuned to the type scale. `.input` is forced to
 16px there too, because iOS Safari zooms the page in on focus for anything
 smaller and never zooms back out.
 
+## Type
+
+Source Serif 4, and it really is loaded now. The `@font-face` block used to sit
+inside `<style media="print">` with nothing to promote it back to screen — that
+technique needs `<link rel=stylesheet media=print onload="this.media='all'">`,
+and an inline `<style media=print>` simply never applies. The app had been
+rendering in the Georgia fallback with every heading weight faked by the
+browser's synthetic bold. The faces are inline base64 in the same document, so
+there was never a network fetch to keep off the critical path; the guard is gone.
+
+The roman is a **variable** face with a 200–900 weight axis, previously served
+twice pinned to static 400 and 600. The `@font-face` now declares
+`font-weight: 200 900`, so real 700/800 costs no extra bytes. Headings are 700,
+display figures 800 with tabular lining numerals, and display sizes are fluid
+(`clamp()`) so a 320px phone and a 430px phone each get a headline in proportion
+to its column. Tracking tightens as size grows.
+
+Only **latin** and **latin-ext** subsets ship. Cyrillic, Greek and Vietnamese
+were dropped (161 KB) and fall back to Georgia, which covers them. Restore those
+`@font-face` blocks and their assets if the app ever needs those scripts.
+
+## Motion
+
+`.scr` scrolls smoothly, and section blocks tagged `.reveal` fade up as they
+enter the viewport. The reveal runs on a CSS **scroll timeline**
+(`animation-timeline: view()`), wrapped in `@supports` — where the engine lacks
+it the animation never applies and content is simply visible, so it decorates
+and never gates. Everything stands down under `prefers-reduced-motion: reduce`.
+
+## Weight
+
+`index.html` is one blocking document, so every byte is on the critical path.
+
+| | before | after |
+| --- | --- | --- |
+| `index.html` | 2.20 MB | 0.58 MB |
+| gzipped | 1642 KB | 386 KB |
+| DOMContentLoaded, Fast 3G | 11.8 s | 3.2 s |
+
+Most of it was the logo: a 1024×1024, 1.15 MB PNG shown at 96px, carrying an
+opaque white background that read as a white tile on the paper ground and a
+bright box in dark mode. It is now 256px with the backdrop knocked out by an
+edge flood-fill — flood-fill, not a white key, because the book, the checklist
+and the star highlights are white too and have to survive.
+
+Assets are referenced from **two** islands: `__bundler/template` and
+`__bundler/ext_resources`. React and ReactDOM appear only in the latter — prune
+by the template alone and the app boots blank trying to reach unpkg.com.
+
 ## Known limits — read before building on this
 
 1. **State syncs to Firebase, and only while signed in.** Google sign-in gates the app; the
