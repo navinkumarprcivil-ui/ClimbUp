@@ -56,10 +56,45 @@ Redeploying? Bump `CACHE` in `sw.js` or clients keep serving the old build.
 - **Focus timer** — records actual time against your estimate.
 - **Settings** — office days, block capacities, reminder time, notifications, dark theme.
 
+## Layout — phone vs desktop
+
+The app renders **edge to edge on a phone** and inside a drawn iPhone frame on a
+wide screen. Both come out of the same markup; the switch is one media query in
+the `<helmet>` style block:
+
+```
+@media (max-width: 560px), (display-mode: standalone) { ... }
+```
+
+Under it the shell drops its padding, `.app` goes `100dvh` with no radius or
+shadow, and `.device-chrome` — the drawn notch, clock, "5G" and battery — is
+hidden, because on a real phone the device already has those. Above it, the
+390×844 frame stays: it is a **presentation device** for showing the design on a
+desktop, not part of the app.
+
+Anything pinned to the bottom (`.bottom-nav`, `.fab-add`, `.timer-bar`,
+`.toast`, `.review-sheet`) offsets itself by `env(safe-area-inset-bottom)`, and
+`.scr` clears the notch with `env(safe-area-inset-top)`, so nothing lands under
+the home indicator or the camera cutout. `viewport-fit=cover` on the viewport
+meta is what makes those insets non-zero — do not drop it.
+
+Touch targets are held at 44px on phones. Controls whose drawn size is smaller
+(the 22px done-toggle, the 12px ghost buttons) keep their size and grow only the
+area that answers a finger, via the transparent `.tap::after` overlay — changing
+the real boxes would reflow rows tuned to the type scale. `.input` is forced to
+16px there too, because iOS Safari zooms the page in on focus for anything
+smaller and never zooms back out.
+
 ## Known limits — read before building on this
 
-1. **State is in memory.** Everything resets on reload except the formula images, which go to
-   `localStorage` under `sp.cardImages`. There is no persistence layer and no accounts.
+1. **State syncs to Firebase, and only while signed in.** Google sign-in gates the app; the
+   keys in `PERSIST_KEYS` are debounced to Realtime Database under `users/<uid>` and read back
+   on load. Signed out there is no persistence at all, and the formula images are the one thing
+   that never leaves the device — they stay in `localStorage` under `sp.cardImages`, so they do
+   not follow you to another phone.
+   *(Note: `componentDidUpdate` is called by the DC runtime with `prevProps` only — there is no
+   `prevState` argument. Comparing against one throws inside a runtime `try/catch`, which
+   silently disables the save. Track previous values yourself; see the comment on that method.)*
 2. **Notifications cannot fire when the browser is closed.** The page's timers only run while it
    is alive. An installed PWA can notify while backgrounded on Android; iOS is stricter. Real
    scheduled alarms need a server pushing to a native app or Web Push with a subscription —
