@@ -30,9 +30,21 @@ A private repo is fine — Vercel does not need it public.
 Those cache headers matter more than they look. `index.html` **is** the app and
 its name never changes, so it is sent `max-age=0, must-revalidate`: Vercel
 answers 304 from the ETag when nothing changed, which costs one round trip
-instead of 0.58 MB. `sw.js` gets the same treatment, because a cached
-service worker is one that never updates, and this one is cache-first — a stale
-copy would keep serving an old build to installed clients indefinitely.
+instead of 0.6 MB. `sw.js` gets the same treatment, because a cached service
+worker is one that never updates, and this one is cache-first — a stale copy
+would keep serving an old build to installed clients indefinitely. Icons and the
+manifest get a day with `stale-while-revalidate`, not `immutable`, since their
+names are not content-hashed.
+
+Do not put `"//"` comment keys in `vercel.json`. Vercel validates it strictly and
+a header route accepts only `source`, `headers`, `has` and `missing` — anything
+else fails the deploy with *"should NOT have additional property"*. The reasoning
+lives here in the README instead.
+
+**A CLI `vercel deploy --prod` is a one-shot upload — it does not watch GitHub.**
+Pushing to `main` deploys nothing until the repository is connected under
+**Project → Settings → Git**. Connecting it is a dashboard action; no property in
+`vercel.json` can do it.
 
 **Firebase Hosting** — same origin as the database, if you prefer that.
 ```

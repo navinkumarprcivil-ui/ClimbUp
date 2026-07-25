@@ -2,21 +2,18 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "headers": [
     {
-      "//": "index.html IS the app — every deploy changes it, and the filename never does, so it must revalidate. Vercel answers 304 from the ETag when it has not changed, which costs one round trip instead of 0.58 MB.",
       "source": "/index.html",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]
     },
     {
-      "//": "Same for the bare path, which is what an installed PWA actually opens.",
       "source": "/",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]
     },
     {
-      "//": "A cached service worker is a service worker that never updates, and this one is cache-first — a stale copy would keep serving an old build to installed clients forever.",
       "source": "/sw.js",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
@@ -24,7 +21,6 @@
       ]
     },
     {
-      "//": "Icons and the manifest change rarely but their names are not content-hashed, so they get a day rather than immutable.",
       "source": "/(.*)\\.(png|webmanifest)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
