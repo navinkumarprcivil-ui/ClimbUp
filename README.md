@@ -61,6 +61,23 @@ Currently needed: `climbup-planner.vercel.app`. Vercel also mints a unique
 preview URL per deployment — those are *not* covered by the production entry, so
 sign-in will not work on a preview link unless you add that host too.
 
+### The firebase namespace is not stable
+
+`firebase-app-compat` can be evaluated **twice** in this bundle — the loader
+re-creates and re-runs every script tag after it swaps the document, and the
+compat build announces it ("Firebase is already defined in the global scope").
+The second evaluation replaces `window.firebase` with a *bare* namespace: no
+`auth`, no `database` (those components registered against the previous one),
+and an empty app list. Measured, after it happens `window.firebase.database` is
+not even a function, and anything going through the global throws
+**"No Firebase App '[DEFAULT]' has been created"**.
+
+Re-initialising does not fix that, because the components are gone. So the first
+complete namespace is pinned on `window.__fb`, and **every** use site goes
+through `window.__firebaseApp()` — never `window.firebase` directly. If you add
+a Firebase call, use the helper, or it will work until the day the double
+evaluation happens and then fail in a way that looks like a config problem.
+
 ## Database rules
 
 The client holds the Firebase config, as every Firebase web app does — the API
