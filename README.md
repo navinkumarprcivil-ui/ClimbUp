@@ -1,5 +1,7 @@
 # ClimbUp — Task, Study, Steady growth
 
+**Live:** https://climbup-planner.vercel.app
+
 A daily task and study planner built around one idea: **you should be able to see yourself falling behind.**
 Open it in the morning, see today split into Morning / Office / Evening, work down the ranked
 list, review the day, and watch the backlog pile build if you don't.
@@ -46,6 +48,17 @@ make the repo public and add `.github/workflows/pages.yml` running
 empty `.nojekyll` at the root.
 
 Redeploying? Bump `CACHE` in `sw.js` or clients keep serving the old build.
+
+### Firebase authorized domains
+
+Every domain the app is served from must be listed under **Firebase console →
+Authentication → Settings → Authorized domains**, or `signInWithPopup` rejects
+with `auth/unauthorized-domain`. Since the whole app sits behind the sign-in
+gate, an unlisted domain means a deployment that loads and then does nothing.
+
+Currently needed: `climbup-planner.vercel.app`. Vercel also mints a unique
+preview URL per deployment — those are *not* covered by the production entry, so
+sign-in will not work on a preview link unless you add that host too.
 
 ## Database rules
 
