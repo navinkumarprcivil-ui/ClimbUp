@@ -8,23 +8,70 @@ Single self-contained page. No build step, no dependencies, no server.
 
 ## Deploy
 
-Everything is static — drop this folder on any host.
+Everything is static — drop this folder on any host. HTTPS is required for
+install-to-home-screen and for notifications; all of these give you that.
 
-**Vercel**
+**Vercel** — what this repo is set up for. `vercel.json` carries the cache
+headers; there is no build step, so Vercel just serves the folder.
+
 ```
 npm i -g vercel
+vercel login
+vercel link            # once, from this folder
 vercel deploy --prod
 ```
 
-**Firebase Hosting**
+Or connect the repo at vercel.com/new and it redeploys on every push to `main`.
+A private repo is fine — Vercel does not need it public.
+
+Those cache headers matter more than they look. `index.html` **is** the app and
+its name never changes, so it is sent `max-age=0, must-revalidate`: Vercel
+answers 304 from the ETag when nothing changed, which costs one round trip
+instead of 0.58 MB. `sw.js` gets the same treatment, because a cached
+service worker is one that never updates, and this one is cache-first — a stale
+copy would keep serving an old build to installed clients indefinitely.
+
+**Firebase Hosting** — same origin as the database, if you prefer that.
 ```
 firebase init hosting     # public directory: .   (this folder)
 firebase deploy
 ```
 
-**GitHub Pages** — push this folder, then Settings → Pages → deploy from branch.
+**GitHub Pages** — only for a public repo, or a private one on a paid plan;
+Pages is not available for private repos on GitHub Free. There is no workflow in
+this repo (it would fail on every push while the repo is private). To use Pages,
+make the repo public and add `.github/workflows/pages.yml` running
+`actions/configure-pages` → `upload-pages-artifact` (path `.`) →
+`deploy-pages`, with `pages: write` and `id-token: write` permissions, plus an
+empty `.nojekyll` at the root.
 
-HTTPS is required for install-to-home-screen and notifications. All three hosts give you that.
+Redeploying? Bump `CACHE` in `sw.js` or clients keep serving the old build.
+
+## Database rules
+
+The client holds the Firebase config, as every Firebase web app does — the API
+key is an identifier, not a secret. What actually guards the data is the
+Realtime Database ruleset, which must stay deny-by-default with per-user grants:
+
+```json
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      "$uid": {
+        ".read":  "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}
+```
+
+The root denial is the floor and the `$uid` grants open exactly one subtree per
+signed-in user; RTDB rules cascade permissively, so a deeper `true` overrides the
+root `false` for that path and nothing else. `users` itself stays unreadable, so
+no one can enumerate accounts.
 
 ## Files
 
@@ -34,8 +81,7 @@ HTTPS is required for install-to-home-screen and notifications. All three hosts 
 | `manifest.webmanifest` | Makes it installable; name, icons, standalone display |
 | `sw.js` | Service worker — caches the shell so it opens offline |
 | `icon-192.png` / `icon-512.png` | App icons (the ClimbUp bamboo mark) |
-
-Redeploying? Bump `CACHE` in `sw.js` or clients keep serving the old build.
+| `vercel.json` | Cache and security headers for the Vercel deploy |
 
 ## What works
 
