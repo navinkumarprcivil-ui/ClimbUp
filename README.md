@@ -126,6 +126,21 @@ no one can enumerate accounts.
 | `icon-192.png` / `icon-512.png` | App icons (the ClimbUp bamboo mark) |
 | `vercel.json` | Cache and security headers for the Vercel deploy |
 
+## Dates
+
+`day` used to be a counter and there was no calendar, which made every dated
+thing impossible. Everything is real dates now, local-time and keyed
+`YYYY-MM-DD`. **Never use `Date.toISOString()`** for a day key — it converts to
+UTC and lands on the wrong day for anyone not on Greenwich; `iso()` formats from
+the local parts instead. Weeks are Monday-based to match the day strip.
+
+At midnight — and on load, and after a cloud read, since the stored `lastRoll`
+may be days old — `rollForward()` runs: every past day still holding work is
+written into `history`, unfinished dated tasks move to today and are marked
+`carried`, and appointments that have passed are dropped rather than dragged
+along. **Routines are deliberately not carried.** A routine is a rhythm, not a
+debt; yesterday's missed gym session is not owed today.
+
 ## The model
 
 One task type at three zooms, not three separate things:
@@ -146,13 +161,39 @@ Goals sit alongside, not above: a goal is a name and a deadline, and any task at
 any scope can be tagged to one. Progress is just the share of its tagged tasks
 that are done.
 
+A month and a week also carry a **target date**, picked from a real calendar
+control. Saving one does not drop you back on a list — it opens the next level
+down immediately, because a month is not finished when it is written down, it is
+finished when it has been split. *Save and add another* keeps the sheet on the
+same parent and steps the suggested date on a week (or a day) at a time, so a
+whole month of weeks, or a week of days, goes in without reopening anything.
+Week slots start at the end of the current week unless that has already arrived
+— offering "due today" as the first weekly slot of a month-long plan is worse
+than useless.
+
+Day tasks carry a **description** as well as a name: the title is what it is, the
+description is what to actually do.
+
+## Routines
+
+Kept apart from tasks on purpose. A routine repeats by weekday, is ticked per
+date rather than once, never carries over, and is stored with a `done` map keyed
+by date. They appear inside the Today sessions alongside tasks and count against
+that session's capacity, because an hour of badminton occupies the evening
+whether or not it is "work".
+
 ## Screens
 
-- **Dashboard** — the home page. Today's completion, what to improve, where the
-  day goes session by session, planned-vs-done for the week, streak and freezes,
-  plan counts, weakest recall, slip reasons. Every line of advice is derived
-  from data you actually entered; with an empty account it says so instead of
-  inventing numbers.
+- **Dashboard** — the home page. A real month calendar marking targets falling
+  due (magenta), days with work on them (blue) and days finished clean (ring);
+  what is coming up in the next fortnight; progress at all three zooms — today,
+  this week, this month — each over its own real window; then what to improve,
+  where the day goes session by session, the week bars, streak and freezes,
+  weakest recall and slip reasons. Every line of advice is derived from data you
+  actually entered; with an empty account it says so instead of inventing
+  numbers.
+- **Daily routine** — reached from Today. The repeating things: name,
+  description, session, minutes and which weekdays.
 - **Today** — that day's tasks only, grouped into Morning / Noon / Evening,
   **press and hold to drag into the order you want to do them**. Capacity bar
   per session, fixed appointments, backlog, review-the-day.
