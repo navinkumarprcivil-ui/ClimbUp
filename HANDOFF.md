@@ -23,8 +23,10 @@ of them:
    does not cover it. Miss this and the app loads to a sign-in screen whose
    button fails with `auth/unauthorized-domain`; since the gate covers
    everything, it looks completely broken.
-3. **Hard-refresh after deploying**, or close every tab and reopen. The service
-   worker is cache-first. Cache is at `climbup-v9`.
+3. **Hard-refresh after deploying**, or close every tab and reopen. Cache is at
+   `climbup-v10`. The worker is **network-first for the page** now, so an
+   ordinary reload picks a new build up; a device stuck on an older
+   cache-first worker needs two reloads, or Settings → App version → Refresh.
 
 Then record the new URL in this file and in the README.
 

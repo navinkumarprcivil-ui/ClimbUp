@@ -1,6 +1,17 @@
 /* ClimbUp service worker — offline app shell.
-   Bump CACHE when you redeploy so clients pick the new build up. */
-const CACHE = 'climbup-v9';
+
+   The app IS index.html and its name never changes, so a cache-first rule for
+   it is a trap: the page is served from cache forever, and the only thing that
+   can break the loop is a new service worker — which the stale page has no
+   reason to go looking for. That is how a device ends up pinned to a build
+   from weeks ago with no way to refresh out of it.
+
+   So: the page and the worker are NETWORK-FIRST, cache only as the offline
+   fallback. Everything else — icons, the manifest — stays cache-first, since
+   those genuinely do not change and are what make an offline open fast.
+
+   Bump CACHE when you redeploy anyway; it clears the old entries out. */
+const CACHE = 'climbup-v10';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -15,18 +26,53 @@ self.addEventListener('activate', e => {
   );
 });
 
+// A page load, or a request for the app document itself.
+const isDocument = req =>
+  req.mode === 'navigate' ||
+  req.destination === 'document' ||
+  /\/(index\.html)?$/.test(new URL(req.url).pathname);
+
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  if (new URL(req.url).origin !== location.origin) return;   // let the network own everything else
+
+  if (isDocument(req)) {
+    // Network first: whatever is deployed wins, every single load.
+    e.respondWith(
+      fetch(req)
+        .then(res => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then(c => c.put('./index.html', copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match('./index.html').then(hit => hit || caches.match('./')))
+    );
+    return;
+  }
+
+  // Static assets: cache first, but refresh the copy in the background so a
+  // changed icon or manifest is picked up by the load after next.
   e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
-      // cache same-origin successes so a reload works offline
-      if (res.ok && new URL(e.request.url).origin === location.origin) {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy));
-      }
-      return res;
-    }).catch(() => caches.match('./index.html')))
+    caches.match(req).then(hit => {
+      const live = fetch(req).then(res => {
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy));
+        }
+        return res;
+      }).catch(() => hit);
+      return hit || live;
+    })
   );
+});
+
+// The page asks for this when it sees a waiting worker, so an update does not
+// have to sit behind every tab being closed.
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 // If a notification is clicked, focus the app rather than opening a second window.

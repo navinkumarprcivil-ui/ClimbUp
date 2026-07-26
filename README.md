@@ -58,7 +58,29 @@ make the repo public and add `.github/workflows/pages.yml` running
 `deploy-pages`, with `pages: write` and `id-token: write` permissions, plus an
 empty `.nojekyll` at the root.
 
-Redeploying? Bump `CACHE` in `sw.js` or clients keep serving the old build.
+Redeploying? Bump `CACHE` in `sw.js` and `BUILD` in the template — `BUILD` is
+printed in Settings, so you can tell at a glance whether the thing in your hand
+is the thing you deployed.
+
+### Why the worker is network-first for the page
+
+The app **is** `index.html` and its name never changes, so a cache-first rule
+for it is a trap: the page is served from cache forever, and the only thing
+that can break the loop is a new service worker — which the stale page has no
+reason to go looking for. That is how a device ends up pinned to a build from
+weeks ago with no way to refresh out of it, which is exactly what happened.
+
+So the document is **network-first**, with the cache as the offline fallback;
+icons and the manifest stay cache-first with a background refresh, since they
+are what make an offline open fast. The page also watches for a new worker,
+sends it `SKIP_WAITING` rather than waiting for every tab to close, and
+reloads once on `controllerchange`. Settings carries a **Refresh** button that
+unregisters every worker, deletes every cache and reloads — the escape hatch
+for a device already stuck.
+
+Measured: from the old cache-first worker, an ordinary reload swaps the worker
+and the next one serves the new page — two reloads, no devtools. On the
+network-first worker a single reload is enough.
 
 ### Firebase authorized domains
 
