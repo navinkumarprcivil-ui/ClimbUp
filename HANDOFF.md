@@ -7,20 +7,26 @@ the architecture, this has the state and the traps.
 
 ## 1. Blocked on you, not on code
 
-**The live site is serving an old build.** Everything below is committed to
-`main` and verified locally, but `climbup-planner.vercel.app` has not had a
-deploy since the rebuild. Two actions, both dashboard-only — no agent can do
-either:
+Everything below is committed to `main` and verified locally. The previous
+Vercel project has been **deleted and is being recreated**, so there is no live
+deployment right now. Three actions, all dashboard-only — no agent can do any
+of them:
 
-1. **Deploy.** `git pull && vercel deploy --prod` from the repo folder.
-   Then hard-refresh, or close every tab of the app and reopen: the service
-   worker is cache-first and will otherwise hand back the stale copy.
-   Cache is at `climbup-v7`.
-2. **Connect the repo**, so this stops recurring — vercel.com → project →
-   Settings → Git → Connect Git Repository → `navinkumarprcivil-ui/ClimbUp`,
-   production branch `main`. A CLI `vercel deploy` is a one-shot upload; it
-   does not watch GitHub. This is an OAuth handshake between the two accounts
-   and needs a signed-in human.
+1. **Import the repo at vercel.com/new** — not `vercel deploy` from the CLI.
+   Importing wires the Git connection at the same time, so every push to `main`
+   deploys itself; a CLI deploy is a one-shot upload that never watches GitHub,
+   which is what left the last project stuck on a stale build for days.
+   Settings for this repo: Framework Preset **Other**, no build command, no
+   output directory, root directory `./`. There is no build step.
+2. **Add the new hostname to Firebase** — console → Authentication → Settings →
+   Authorized domains. A new project means a new hostname and the old entry
+   does not cover it. Miss this and the app loads to a sign-in screen whose
+   button fails with `auth/unauthorized-domain`; since the gate covers
+   everything, it looks completely broken.
+3. **Hard-refresh after deploying**, or close every tab and reopen. The service
+   worker is cache-first. Cache is at `climbup-v7`.
+
+Then record the new URL in this file and in the README.
 
 **It has landed when:** the bottom nav reads `Dashboard · Today · Plan ·
 Revise`, the dashboard opens on a month calendar with today ringed, and the

@@ -1,2 +1,7 @@
+# Nothing here is part of the site. The deploy is index.html plus the icons,
+# the manifest and the service worker; everything else is repo furniture.
 .github/
+build/
+tools/
 README.md
+HANDOFF.md

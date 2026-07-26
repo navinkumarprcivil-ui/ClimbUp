@@ -1,7 +1,5 @@
 # ClimbUp — Task, Study, Steady growth
 
-**Live:** https://climbup-planner.vercel.app
-
 A daily task and study planner built around one idea: **you should be able to see yourself falling behind.**
 Set a monthly target, break it into weekly, break those into daily, then open Today and drag
 the day into the order you'll actually do it. Review the day, and watch the backlog build if
@@ -69,9 +67,10 @@ Authentication → Settings → Authorized domains**, or `signInWithPopup` rejec
 with `auth/unauthorized-domain`. Since the whole app sits behind the sign-in
 gate, an unlisted domain means a deployment that loads and then does nothing.
 
-Currently needed: `climbup-planner.vercel.app`. Vercel also mints a unique
-preview URL per deployment — those are *not* covered by the production entry, so
-sign-in will not work on a preview link unless you add that host too.
+**Add the production hostname of every deployment you create.** A new Vercel
+project means a new hostname, and the old entry does not cover it — the app will
+load and the sign-in button will simply fail. Vercel also mints a unique preview
+URL per deployment; those are not covered by the production entry either.
 
 ### The firebase namespace is not stable
 
