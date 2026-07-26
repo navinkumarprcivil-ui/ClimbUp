@@ -24,13 +24,13 @@ of them:
    button fails with `auth/unauthorized-domain`; since the gate covers
    everything, it looks completely broken.
 3. **Hard-refresh after deploying**, or close every tab and reopen. The service
-   worker is cache-first. Cache is at `climbup-v7`.
+   worker is cache-first. Cache is at `climbup-v9`.
 
 Then record the new URL in this file and in the README.
 
 **It has landed when:** the bottom nav reads `Dashboard · Today · Plan ·
 Revise`, the dashboard opens on a month calendar with today ringed, and the
-middle session is called **Noon** rather than Office.
+middle session is called **Busy Hours** rather than Office or Noon.
 
 **Expect the old data to vanish.** `SCHEMA` is 4; `loadCloud` discards anything
 stored under a different version. What is in Firebase now is the old demo seed,
@@ -96,7 +96,8 @@ they are here because they will bite again.
 ## 4. What exists now
 
 **Model.** One task type at three zooms — `scope` is `month | week | day`, with
-a `parent` link. A day task also has a `block` (Morning / Noon / Evening), a
+a `parent` link. A day task also has a `block` (keys `morning` / `noon` / `evening`, labelled
+Morning / Busy Hours / Evening), a
 `date`, and a `note`. Month and week tasks carry a `targetDate`. Goals sit
 alongside and are just a name, a deadline and a tag on tasks. Routines are
 separate: they repeat by weekday, are ticked per date, and never carry.

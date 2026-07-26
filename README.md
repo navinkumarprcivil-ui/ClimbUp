@@ -212,7 +212,7 @@ whether or not it is "work".
   numbers.
 - **Daily routine** — reached from Today. The repeating things: name,
   description, session, minutes and which weekdays.
-- **Today** — that day's tasks only, grouped into Morning / Noon / Evening,
+- **Today** — that day's tasks only, grouped into Morning / Busy Hours / Evening,
   **press and hold to drag into the order you want to do them**. Capacity bar
   per session, fixed appointments, backlog, review-the-day.
 - **Plan** — Month and Week tabs. Same drag-to-order, plus *Break into weekly* /
@@ -250,6 +250,19 @@ gone by the time anyone got in. Dismissing it with the × is a **snooze**, not a
 `sp.installSnooze` a week ahead and the banner is back after that. The old
 `sp.installDismissed` flag suppressed it permanently, so a single stray tap
 meant it never appeared again — that key is now deleted on sight.
+
+## Sessions and days
+
+The three sessions are `morning` / `noon` / `evening` as **keys**, labelled
+Morning / **Busy Hours** / Evening in `BLOCKS`. Keys are what stored tasks and
+hours are filed under, so a label can be reworded without touching anyone's
+data — reword the label, never the key.
+
+Office-day chips are built from `DAYS`, **not** `Object.keys(state.office)`.
+Firebase hands an object's keys back in lexicographic order, so after one cloud
+round trip that rendered the week as Fri Mon Sat Sun Thu Tue Wed. They carry
+two-letter labels for the same reason: a row of M T W T F S S is two Ts and two
+Ss you have to count positions to tell apart.
 
 ## Installing, and why a button cannot do it
 
