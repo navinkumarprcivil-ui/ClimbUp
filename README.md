@@ -223,6 +223,42 @@ whether or not it is "work".
 - **Settings** — your available hours per session (capacity is the span between
   them), office days, notifications, recall frequency, theme, erase everything.
 
+## The back button, and leaving
+
+Screens are state, not URLs, so a browser back press would otherwise walk
+straight out of the app. `setupBack` keeps **one sentinel history entry** in
+front of the entry the app loaded on; back pops it, the handler pushes it
+straight back, and the press is spent unwinding the UI instead — deepest
+overlay first (cropper, recall, review, then any open sheet), then any screen
+back to the **dashboard**. Only from the dashboard does it ask *Leave
+ClimbUp?*, and a second back press there is read as *stay*.
+
+The sentinel is laid down on sign-in, not on mount. Laid down earlier it
+swallows the first back press on the sign-in screen, where back should just be
+back — and the gate is `z-index:50`, so a dialog raised behind it would look
+like a dead button. For the same reason the `beforeunload` warning, which is
+what covers closing the tab outright rather than only going back, is armed on
+sign-in and disarmed on the way out so *Leave* does not prompt twice.
+
+## The install banner
+
+It rides in at the top for eight seconds on the way in, then gets out of the
+way. `offerInstall` is called when auth resolves to signed-in, **not** from
+`componentDidMount`: mounting happens while the sign-in gate still covers the
+app, so a banner started there spent its whole life behind the gate and was
+gone by the time anyone got in. Dismissing it with the × sets
+`sp.installDismissed` and it stays gone.
+
+## Recall frequency
+
+Six chips (5m → 4h) for the common intervals, plus a free minutes field taking
+anything from **5 minutes to 12 hours**, a per-day cap, and a window recalls
+are allowed in at all. The window may wrap past midnight — `21:00 → 07:00` is
+read as the two ends of the day. Outside it the timer keeps ticking and simply
+does not pop, which is one more entry in the `blocked` list in `schedule`
+alongside an open overlay, a running timer, the daily cap and a fixed
+appointment.
+
 ## Ordering, and why priority no longer sorts
 
 `order` is the only thing that ranks tasks within a list, and drag is the only
