@@ -223,6 +223,34 @@ whether or not it is "work".
 - **Settings** — your available hours per session (capacity is the span between
   them), office days, notifications, recall frequency, theme, erase everything.
 
+## Where tasks are added, and what Today is
+
+Every task is added on **Plan**, at whichever of the three zooms is showing —
+the `+` is rendered only on that screen. Today is a *view*: it shows one date's
+work and lets you tick, focus, reorder and review it, but never creates it. A
+task that appears on Today with no target above it is exactly the orphan this
+app exists to prevent.
+
+Today's window is `dayOffset`, and it is view state — not persisted, reset on
+leaving the screen. `viewDate` follows it; `today` does not, because the
+dashboard's rings and block stats must not move when you glance at tomorrow.
+Undated legacy rows count as today's, never as whatever day you shifted to, and
+*Review the day* is hidden anywhere but today.
+
+Carrying over is `rollForward`, which runs at midnight, on load, and after a
+cloud read — the stored `lastRoll` can be days old. Every unfinished dated task
+moves to today marked `carried`; finished ones and passed appointments stay put
+for the record. Today counts what came over and says so above the sessions.
+
+## Notifications will not fire from `new Notification()`
+
+Android Chrome forbids the constructor outright — *"Illegal constructor. Use
+ServiceWorkerRegistration.showNotification instead"* — so the permission could
+be granted, the switch on, and every alert still fail with nothing in the UI
+to explain it. `notify()` goes through `navigator.serviceWorker.ready` and
+`showNotification`, keeps the constructor as a desktop fallback, and returns a
+promise so the test button can report what actually happened.
+
 ## The back button, and leaving
 
 Screens are state, not URLs, so a browser back press would otherwise walk
