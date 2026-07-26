@@ -251,6 +251,24 @@ gone by the time anyone got in. Dismissing it with the × is a **snooze**, not a
 `sp.installDismissed` flag suppressed it permanently, so a single stray tap
 meant it never appeared again — that key is now deleted on sight.
 
+## Installing, and why a button cannot do it
+
+No script can put an app on a home screen. Chrome hands over a
+`beforeinstallprompt` event, which is captured and replayed when **Install** is
+tapped; without it — Safari always, Chrome until the page qualifies — the
+button opens a short **instructions sheet** keyed to the browser instead.
+
+Naming the right menu item is the whole point of that sheet. Chrome's *Add to
+Home screen* **shortcut** and an *Add to Home Screen* done from a non-Safari
+browser on iPhone both drop a **bookmark that reopens in a browser tab** — the
+exact thing installing is meant to avoid. The sheet says *Install app* on
+Android, and sends iPhone users to Safari first.
+
+The manifest carries `"display": "standalone"`, a stable `"id"`, and
+`start_url` `"./"` so the installed icon opens the app full screen rather than
+in a tab. Install also requires **HTTPS** — over plain HTTP no browser offers
+it at all.
+
 ## Recall frequency
 
 Six chips (5m → 4h) for the common intervals, plus a free minutes field taking
