@@ -252,10 +252,20 @@ get wrong and are deliberate:
    they are lost after one move — every move sets state, and the re-render can
    hand back a different DOM node.
 
-Images live in `localStorage` under `sp.cardImages` and are **stripped from the
-Firebase payload** before every save; megabytes of base64 have no business in a
-realtime sync. They are re-attached by card id on load, so they do not follow
-you to another device.
+Images are keyed by card id and stored twice: in `localStorage` under
+`sp.cardImages`, for an instant first paint, and in Realtime Database under
+`users/<uid>/cardImages/<cardId>`. They are still **stripped from the
+`PERSIST_KEYS` payload** before every save — megabytes of base64 have no
+business in a debounced whole-state write — but `storeImage` writes the one
+image that changed to its own key, so an image survives a cleared cache and
+follows the account to another device.
+
+Because the images sit in a sibling of the synced keys, `saveCloud` uses
+`update()` rather than `set()`. `set()` replaces the entire user node, which
+deleted `cardImages` on the very next save and made an added image disappear
+the next time the app was opened. On sign-in `loadCloudImages` merges the
+account copy over the device cache and lifts anything device-only up into the
+account, which migrates images added before they were synced.
 
 ## Layout — phone vs desktop
 
