@@ -116,6 +116,22 @@ signed-in user; RTDB rules cascade permissively, so a deeper `true` overrides th
 root `false` for that path and nothing else. `users` itself stays unreadable, so
 no one can enumerate accounts.
 
+## Working on it
+
+`index.html` is **not hand-editable** — it is a self-contained bundle with
+base64 islands. Unpack it, edit the template, pack it back:
+
+```bash
+python3 tools/bundle.py unpack     # -> build/template.html   (edit this)
+python3 tools/bundle.py pack       # -> writes index.html
+python3 tools/bundle.py assets     # manifest contents by size
+python3 tools/preview.py           # -> build/preview.html, sign-in stubbed
+```
+
+`pack` round-trips byte-identically, so unpack/pack with no edits is a no-op.
+`build/` is gitignored. See `HANDOFF.md` for current state and the traps this
+codebase has already produced.
+
 ## Files
 
 | File | What it is |
@@ -125,6 +141,9 @@ no one can enumerate accounts.
 | `sw.js` | Service worker — caches the shell so it opens offline |
 | `icon-192.png` / `icon-512.png` | App icons (the ClimbUp bamboo mark) |
 | `vercel.json` | Cache and security headers for the Vercel deploy |
+| `tools/bundle.py` | Unpack/pack the islands inside `index.html` |
+| `tools/preview.py` | Build a sign-in-stubbed copy for testing |
+| `HANDOFF.md` | Current state, outstanding actions, known traps |
 
 ## Dates
 
