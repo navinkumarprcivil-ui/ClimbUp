@@ -131,9 +131,12 @@ editing, erase, calendar highlighting today. No page errors.
 - **Notifications cannot fire while the app is closed.** Real alarms need Web
   Push and a server; `sw.js` already handles `notificationclick`, so the client
   half is done.
-- **Card images are device-local** (`localStorage`, stripped from the Firebase
-  payload deliberately — megabytes of base64 have no business in a realtime
-  sync). They do not follow you to another phone.
+- **Card images now sync.** They stay out of the debounced `PERSIST_KEYS`
+  payload — megabytes of base64 have no business in a realtime sync — and are
+  written one key at a time to `users/<uid>/cardImages/<cardId>`, with
+  `localStorage` kept as a fast local cache. `saveCloud` must therefore stay on
+  `update()`; going back to `set()` wipes that sibling on the next save and the
+  image vanishes on reopen.
 - **One open question for the owner:** daily targets filled in for a *future*
   week are filed on those future dates, so they do not appear on Today until
   that day arrives. That is the intended reading of "assigned on a daily basis"
