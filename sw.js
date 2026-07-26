@@ -1,6 +1,6 @@
 /* ClimbUp service worker — offline app shell.
    Bump CACHE when you redeploy so clients pick the new build up. */
-const CACHE = 'climbup-v8';
+const CACHE = 'climbup-v9';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

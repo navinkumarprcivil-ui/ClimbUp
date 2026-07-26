@@ -246,8 +246,10 @@ It rides in at the top for eight seconds on the way in, then gets out of the
 way. `offerInstall` is called when auth resolves to signed-in, **not** from
 `componentDidMount`: mounting happens while the sign-in gate still covers the
 app, so a banner started there spent its whole life behind the gate and was
-gone by the time anyone got in. Dismissing it with the × sets
-`sp.installDismissed` and it stays gone.
+gone by the time anyone got in. Dismissing it with the × is a **snooze**, not a burial: it sets
+`sp.installSnooze` a week ahead and the banner is back after that. The old
+`sp.installDismissed` flag suppressed it permanently, so a single stray tap
+meant it never appeared again — that key is now deleted on sight.
 
 ## Recall frequency
 
