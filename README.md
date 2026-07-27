@@ -476,6 +476,18 @@ Only **latin** and **latin-ext** subsets ship. Cyrillic, Greek and Vietnamese
 were dropped (161 KB) and fall back to Georgia, which covers them. Restore those
 `@font-face` blocks and their assets if the app ever needs those scripts.
 
+## Text size
+
+Settings → Appearance carries five steps, S to XXL. Every size in this app is
+a hard px value in an inline style — there is no root font-size to turn — so
+the control sets `zoom` on `.scr`, which scales the scroll area whole: text,
+spacing and cards together, which is what "bigger text" means on a phone. The
+fixed chrome is deliberately left out of it: the nav, toasts and sheets stay at
+their designed size so the tap targets do not move under your thumb.
+
+Five steps rather than a slider. A slider invites hunting for a value that does
+not exist; each of these is legible and the jump between them is visible.
+
 ## Colour and shape
 
 The system was a hard-edged broadsheet: radii of 1/2/4px, one accent, no fills.
