@@ -497,6 +497,34 @@ Assets are referenced from **two** islands: `__bundler/template` and
 `__bundler/ext_resources`. React and ReactDOM appear only in the latter — prune
 by the template alone and the app boots blank trying to reach unpkg.com.
 
+## Schema migrations — never bump without one
+
+`loadCloud` used to discard anything not on the current `SCHEMA` and drop the
+user into `freshState()`. That is a **silent wipe of a real account** every
+time the state shape changes, and it is the single most dangerous thing this
+codebase has done. There is a `MIGRATIONS` ladder now: one function per
+version, run in order, so an account three versions behind arrives intact.
+**Add a step whenever you bump `SCHEMA`.**
+
+What cannot be migrated — a version from the future, or a blob with no version
+at all — is no longer thrown away either. It is held on `this._orphan`, the
+dashboard says so in a card that cannot be missed, and the user can download
+it as JSON before anything writes over the top.
+
+One trap, found by measuring: `const data = snap.val()` cannot be reassigned,
+so `data = migrate(data)` threw a `TypeError` that the promise's own `.catch`
+swallowed — the account loaded as empty with no error anywhere. It is `let`.
+
+## The streak measures days, not paperwork
+
+It used to advance only through *Review the day*. Finish a full week and
+forget to tap it once and the counter read zero — a streak that punishes you
+for not filing paperwork measures nothing. `rollForward` settles every day it
+closes on that day's own evidence: work finished holds it, a day with nothing
+planned is a rest day and holds it too, a day with work left untouched breaks
+it. `streakSettled` marks the last day ruled on, so a day Review already
+judged is not counted a second time.
+
 ## Known limits — read before building on this
 
 1. **State syncs to Firebase, and only while signed in.** Google sign-in gates the app; the
