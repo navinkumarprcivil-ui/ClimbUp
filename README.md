@@ -419,7 +419,23 @@ the next time the app was opened. On sign-in `loadCloudImages` merges the
 account copy over the device cache and lifts anything device-only up into the
 account, which migrates images added before they were synced.
 
-## The bottom nav, and the phone's own bar
+## The bottom nav
+
+The ordinary bottom bar every phone app has: a 22px stroke icon over an 11px
+label, with **colour alone** saying which tab you are on — accent for the
+current one, 55% text for the rest. A hairline top border because content
+scrolls under it.
+
+Borders around each tab and filled pills behind the labels were both tried and
+both read as clutter. A tab bar is chrome; chrome should be quiet.
+
+Icons are single `d` strings in `NAV_ICONS` so the whole set rides in one
+template binding, drawn `fill:none, stroke:currentColor` — nothing but colour
+changes between states. The spacer that clears the add button is only present
+on Plan, since that is the only screen the add button is on; a permanent gap
+with nothing in it is the sort of thing you notice and cannot explain.
+
+## The nav's height, and the phone's own bar
 
 The nav box was **84px tall with its buttons pinned to `flex-start`**, so
 roughly 26px of it was dead space sitting directly above the phone's
