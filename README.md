@@ -281,8 +281,13 @@ is how far it has slid, so opening an arbitrary day is just `daysBetween`.
 
 ## Where tasks are added, and what Today is
 
-Every task is added on **Plan**, at whichever of the three zooms is showing —
-the `+` is rendered only on that screen. Today is a *view*: it shows one date's
+Every task with a target above it is added on **Plan**, at whichever of the
+three zooms is showing — the floating `+` is rendered only on that screen.
+
+Today carries a second, smaller `+` beside its heading for the other case: you
+have tapped a date on the calendar and want something on **that** day. It opens
+the sheet already dated to the day you are looking at, so the date is never
+picked twice, and it is the only thing Today creates. Today is a *view*: it shows one date's
 work and lets you tick, focus, reorder and review it, but never creates it. A
 task that appears on Today with no target above it is exactly the orphan this
 app exists to prevent.
