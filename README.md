@@ -260,6 +260,24 @@ whether or not it is "work".
 - **Settings** — your available hours per session (capacity is the span between
   them), office days, notifications, recall frequency, theme, erase everything.
 
+## Reaching a particular date
+
+Three ways in, in increasing reach:
+
+1. **Today's day strip** — three days back, eleven forward. For "what's on
+   tomorrow".
+2. **The dashboard calendar** — every cell is a button carrying the **number of
+   tasks** on that day, and tapping one opens Today on that date. Routines are
+   **not** counted: they repeat by weekday and are a rhythm, not that day's work.
+3. **The calendar's ‹ › arrows** walk months, so nothing is out of reach. The
+   grid used to be pinned to the current month, which made any date outside it
+   unreachable entirely. `monthOffset` browses; `pMonth` still measures the
+   real month, so the progress figures do not follow the browsing. Leaving the
+   dashboard resets it — coming back to find yourself in March would be a bug.
+
+`openDay` is the whole mechanism: Today is a window on one date and `dayOffset`
+is how far it has slid, so opening an arbitrary day is just `daysBetween`.
+
 ## Where tasks are added, and what Today is
 
 Every task is added on **Plan**, at whichever of the three zooms is showing —
