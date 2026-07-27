@@ -522,6 +522,19 @@ their designed size so the tap targets do not move under your thumb.
 Five steps rather than a slider. A slider invites hunting for a value that does
 not exist; each of these is legible and the jump between them is visible.
 
+## An undefined token is not an error — it is just gone
+
+The spacing scale ran 1, 2, 3, 4, **6**, 8. Nine call sites had been written
+against `--space-5`, and every one of them resolved to nothing: `padding:
+var(--space-5)` computed to `0px`, silently. That is how a dialog ends up with
+its text flush against a rounded corner and looking cropped. CSS does not warn,
+the style attribute still reads correctly in devtools, and only
+`getComputedStyle` tells the truth — which is what caught it.
+
+`--space-5: 25px` now exists. When adding a token-based style, check the token
+is real: a quick sweep is
+`getComputedStyle(document.querySelector('.app')).getPropertyValue('--name')`.
+
 ## Colour and shape
 
 The system was a hard-edged broadsheet: radii of 1/2/4px, one accent, no fills.
