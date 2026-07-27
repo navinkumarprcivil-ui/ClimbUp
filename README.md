@@ -404,6 +404,20 @@ get wrong and are deliberate:
    they are lost after one move — every move sets state, and the re-render can
    hand back a different DOM node.
 
+**A data URL cannot go through an inline style string.** It carries a
+semicolon — `data:image/jpeg;base64,…` — and the runtime splits a `style`
+attribute on `;` before React sees it, so `background-image:url(data:image/jpeg
+;base64,…)` arrived truncated at `data:image/jpeg` and resolved to nothing.
+Every card image was cropped, stored, synced to the account **and never once
+painted**. Card images are `<img>` elements whose `src` is assigned in
+`syncCardImages` from `componentDidUpdate`, out of the style string entirely —
+the same reason the cropper assigns its own `src` imperatively.
+
+It is worth saying how this survived: the earlier fix verified state, bindings
+and the account round trip, all of which were correct. Nothing checked the
+painted result. `naturalWidth > 0` on the rendered `<img>` is the only
+assertion that would have caught it.
+
 Images are keyed by card id and stored twice: in `localStorage` under
 `sp.cardImages`, for an instant first paint, and in Realtime Database under
 `users/<uid>/cardImages/<cardId>`. They are still **stripped from the
