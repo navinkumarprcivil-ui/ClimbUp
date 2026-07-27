@@ -166,6 +166,19 @@ codebase has already produced.
 | `tools/preview.py` | Build a sign-in-stubbed copy for testing |
 | `HANDOFF.md` | Current state, outstanding actions, known traps |
 
+## Date format
+
+Every displayed date is **DD/MM/YYYY**, and every one of them goes through
+`prettyDate` — that function is the only place to change it. It used to render
+"26 Jul", with the year appearing only when it was not the current one: compact,
+but two formats to read and ambiguous the moment a year rolls over.
+
+The one thing `prettyDate` does **not** control is `<input type="date">`.
+Browsers render those in the device's own locale and no CSS or script can
+override it. A phone set to India or the UK already shows DD/MM/YYYY there; the
+only way to force it everywhere would be to replace the native pickers with
+text fields, which costs the mobile date wheel and is not worth it.
+
 ## Dates
 
 `day` used to be a counter and there was no calendar, which made every dated
@@ -392,8 +405,8 @@ account, which migrates images added before they were synced.
 
 The nav box was **84px tall with its buttons pinned to `flex-start`**, so
 roughly 26px of it was dead space sitting directly above the phone's
-home/back/recents bar — read as a gap, because it was one. It is 62px with the
-items centred, and every offset coupled to it moved with it: the FAB, the
+home/back/recents bar — read as a gap, because it was one. It is **46px** with
+the items centred — label to screen edge went from ~50px to 16px — and every offset coupled to it moved with it: the FAB, the
 timer bar, the toasts and `.scr`'s bottom padding. Change one of those and you
 must change all five, or something ends up floating.
 
