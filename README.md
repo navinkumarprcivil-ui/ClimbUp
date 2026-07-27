@@ -232,8 +232,10 @@ whether or not it is "work".
   weakest recall and slip reasons. Every line of advice is derived from data you
   actually entered; with an empty account it says so instead of inventing
   numbers.
-- **Daily routine** — reached from Today. The repeating things: name,
-  description, session, minutes and which weekdays.
+- **Daily routine** — a **section of Settings**, not a screen. It describes
+  your week rather than your day: name, description, session, minutes and which
+  weekdays. Today only points at it — *Add a daily routine* while none is set,
+  a quieter *Edit daily routine* once one is.
 - **Today** — that day's tasks only, grouped into Morning / Busy Hours / Evening,
   **press and hold to drag into the order you want to do them**. Capacity bar
   per session, fixed appointments, backlog, review-the-day.
@@ -385,6 +387,19 @@ deleted `cardImages` on the very next save and made an added image disappear
 the next time the app was opened. On sign-in `loadCloudImages` merges the
 account copy over the device cache and lifts anything device-only up into the
 account, which migrates images added before they were synced.
+
+## The bottom nav, and the phone's own bar
+
+The nav box was **84px tall with its buttons pinned to `flex-start`**, so
+roughly 26px of it was dead space sitting directly above the phone's
+home/back/recents bar — read as a gap, because it was one. It is 62px with the
+items centred, and every offset coupled to it moved with it: the FAB, the
+timer bar, the toasts and `.scr`'s bottom padding. Change one of those and you
+must change all five, or something ends up floating.
+
+`env(safe-area-inset-bottom)` is added on top of that height on phones, never
+baked into it — the inset is the hardware's home indicator, not padding of
+ours.
 
 ## Layout — phone vs desktop
 
