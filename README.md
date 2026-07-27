@@ -415,7 +415,19 @@ the real boxes would reflow rows tuned to the type scale. `.input` is forced to
 16px there too, because iOS Safari zooms the page in on focus for anything
 smaller and never zooms back out.
 
-## Type
+## Type — and why it changed
+
+The app was **Source Serif 4 for everything**. A serif at 12–15px on a phone
+reads bookish rather than professional, and every button, tag, numeral and nav
+label was wearing it. **Source Sans 3** (variable, 200–900, one file per subset)
+now carries all of that; the serif is kept for `h1`/`h2` display headings, where
+it still earns its keep and gives the app a voice.
+
+The display rule is declared **after** the reset's own `h1..h6` block. That
+block sets `font-family` at the same specificity, so declared before it the
+serif silently lost on source order and every heading came out sans.
+
+## Old type notes
 
 Source Serif 4, and it really is loaded now. The `@font-face` block used to sit
 inside `<style media="print">` with nothing to promote it back to screen — that
@@ -435,6 +447,27 @@ to its column. Tracking tightens as size grows.
 Only **latin** and **latin-ext** subsets ship. Cyrillic, Greek and Vietnamese
 were dropped (161 KB) and fall back to Georgia, which covers them. Restore those
 `@font-face` blocks and their assets if the app ever needs those scripts.
+
+## Colour and shape
+
+The system was a hard-edged broadsheet: radii of 1/2/4px, one accent, no fills.
+It is card-based now, on a lightly tinted ground.
+
+- **Radii** 8/14/22px plus `--radius-pill`. Cards need room to read as cards
+  rather than boxes ruled on a page.
+- **`--card-*` / `--ink-*`** — six pale card fills, each paired with an ink of
+  the same hue driven dark, so a heading on a card never falls back to plain
+  black. Both sets are redefined for the dark theme; the pale fills would blow
+  out otherwise.
+- **`.card-panel`** — the white panel the layout is built from.
+- **`BLOCK_SKIN`** gives each session its own colour, so a glance at Today says
+  which part of the day you are looking at before you have read a word.
+- The Today **day strip** runs three days back and eleven forward, dot-marked
+  where there is work, and is the same `dayOffset` the arrows drove.
+
+Done on Dashboard and Today. Plan, Revise and Settings still wear the older
+flat treatment inside the new tokens — they inherit the radii, type and ground,
+but not the cards.
 
 ## Motion
 
