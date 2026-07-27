@@ -254,7 +254,8 @@ whether or not it is "work".
   per session, fixed appointments, backlog, review-the-day.
 - **Plan** — Month and Week tabs. Same drag-to-order, plus *Break into weekly* /
   *Break into daily*, and each parent shows its children inline.
-- **Revise** — topic groups, each holding image cards with their own headings.
+- **Revise** — **subjects** (Computer networks, Structural analysis), each
+  holding image cards under a **formula or heading**.
   *Revise all* walks a whole group in one pass rather than interrupting one card
   at a time. Intervals stretch 1 → 3 → 7 → 21 → 45 days.
 - **Settings** — your available hours per session (capacity is the span between

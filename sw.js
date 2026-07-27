@@ -11,7 +11,7 @@
    those genuinely do not change and are what make an offline open fast.
 
    Bump CACHE when you redeploy anyway; it clears the old entries out. */
-const CACHE = 'climbup-v21';
+const CACHE = 'climbup-v22';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
