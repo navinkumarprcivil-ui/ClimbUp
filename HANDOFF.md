@@ -1,6 +1,6 @@
 # Handoff — where ClimbUp stands
 
-Written at commit `043e323`. Read this first in a new session; the README has
+Updated for build `2026-07-29.2`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
 ---
@@ -24,7 +24,7 @@ of them:
    button fails with `auth/unauthorized-domain`; since the gate covers
    everything, it looks completely broken.
 3. **Hard-refresh after deploying**, or close every tab and reopen. Cache is at
-   `climbup-v10`. The worker is **network-first for the page** now, so an
+   `climbup-v26`. The worker is **network-first for the page**, so an
    ordinary reload picks a new build up; a device stuck on an older
    cache-first worker needs two reloads, or Settings → App version → Refresh.
 
@@ -34,10 +34,9 @@ Then record the new URL in this file and in the README.
 Revise`, the dashboard opens on a month calendar with today ringed, and the
 middle session is called **Busy Hours** rather than Office or Noon.
 
-**Expect the old data to vanish.** `SCHEMA` is 4; `loadCloud` discards anything
-stored under a different version. What is in Firebase now is the old demo seed,
-so nothing real is lost — but bump `SCHEMA` again any time the state shape
-changes, and know that it wipes.
+`SCHEMA` is 4 and old data goes through the `MIGRATIONS` ladder. Never bump it
+without adding the next migration. An unreadable/future snapshot is held for
+download instead of silently replaced.
 
 > The sandbox these sessions run in **cannot reach `vercel.app` or `github.io`**
 > (network policy answers 403 to CONNECT). No agent can verify the live site for
@@ -119,14 +118,29 @@ The same breakdown sheet now has a no-details automatic route: months become
 four evenly dated parts, and weeks become up to seven daily parts. Nested names
 retain their path (`Parent — Part 1` → `Parent — Part 1.1`).
 
+**Offline-first.** After one online sign-in, the app restores the account and
+all `PERSIST_KEYS` from IndexedDB, lets every ordinary task and split-task flow
+continue offline, and moves pending work to Firebase automatically on
+reconnect. Pending device data wins over an older cloud read. Card-image
+adds/deletions have their own compact retry queue; the data URLs remain in
+`sp.cardImages`. Signing out or changing Google accounts clears the previous
+account's device record. The Dashboard status chip appears only when useful;
+Settings always explains the current device/cloud state.
+
+**Opening.** A 2.4-second mark/name/glow sequence covers the first cache/auth
+work, then dissolves into the app. `prefers-reduced-motion` shortens it to a
+near-instant 250 ms.
+
 **Verified in-browser at 320/390/412px:** the guided chain end to end,
 descriptions surviving into nested rows, drag reorder, routines appearing on
 Today, carry-forward marking a stale task `carried`, crop-and-save, hour
 editing, erase, calendar highlighting today. No page errors.
 
-**Verified in the source harness at build `2026-07-29.1`:** automatic month and
-week split counts, nested part naming, consecutive date windows, and rollover
-of ordinary tasks, split tasks and fixed-time tasks. Routines remain unchanged.
+**Verified in the source harness at build `2026-07-29.2`:** automatic month and
+week split counts, nested part naming, consecutive date windows, rollover of
+ordinary tasks, split tasks and fixed-time tasks, IndexedDB restore, offline
+device writes, reconnect upload and queued card-image operations. Routines
+remain unchanged.
 
 ---
 
@@ -134,8 +148,6 @@ of ordinary tasks, split tasks and fixed-time tasks. Routines remain unchanged.
 
 - **Weekly/monthly progress is task-count based**, not effort-weighted. Fine
   now, will feel wrong once tasks vary a lot in size.
-- **Streak and freezes** still only advance through "Review the day"; the
-  automatic midnight rollover does not touch them. Worth unifying.
 - **No editing of an existing task** — only add and delete. This is the most
   obvious gap for daily use.
 - **Notifications cannot fire while the app is closed.** Real alarms need Web

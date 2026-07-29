@@ -29,8 +29,8 @@ Those cache headers matter more than they look. `index.html` **is** the app and
 its name never changes, so it is sent `max-age=0, must-revalidate`: Vercel
 answers 304 from the ETag when nothing changed, which costs one round trip
 instead of 0.6 MB. `sw.js` gets the same treatment, because a cached service
-worker is one that never updates, and this one is cache-first — a stale copy
-would keep serving an old build to installed clients indefinitely. Icons and the
+worker is one that never updates. The worker is network-first for the document,
+so a stale copy must not keep serving an old build to installed clients. Icons and the
 manifest get a day with `stale-while-revalidate`, not `immutable`, since their
 names are not content-hashed.
 
@@ -81,6 +81,27 @@ for a device already stuck.
 Measured: from the old cache-first worker, an ordinary reload swaps the worker
 and the next one serves the new page — two reloads, no devtools. On the
 network-first worker a single reload is enough.
+
+### Offline use and sync
+
+After one successful online sign-in and load, ClimbUp is fully usable without a
+connection. The service worker provides the app shell; an IndexedDB record
+provides the signed-in account and every key in `PERSIST_KEYS`. Changes are
+written to the device first, marked pending, and uploaded to
+`users/<uid>` automatically when the connection returns. Settings shows the
+current device/cloud status, and the Dashboard only adds a status chip when
+something is offline, preparing, or waiting.
+
+The device copy wins when it has pending edits, so reconnecting cannot replace
+offline work with an older Firebase snapshot. A different Google account never
+inherits that copy: changing accounts clears the prior account's device state
+before loading the new one, and signing out clears it too. The first ever use
+still needs a connection because the browser has no authenticated account or
+cached shell yet.
+
+Card images keep their fast `localStorage` cache and use a compact IndexedDB
+operation queue while offline. On reconnect each queued image add or deletion
+is applied to the `cardImages` sibling after the main state update.
 
 ### Firebase authorized domains
 
@@ -437,7 +458,9 @@ Images are keyed by card id and stored twice: in `localStorage` under
 `PERSIST_KEYS` payload** before every save — megabytes of base64 have no
 business in a debounced whole-state write — but `storeImage` writes the one
 image that changed to its own key, so an image survives a cleared cache and
-follows the account to another device.
+follows the account to another device. Offline image changes add a compact
+operation to the IndexedDB record; the data URL remains only in the existing
+image cache and is uploaded when the connection returns.
 
 Because the images sit in a sibling of the synced keys, `saveCloud` uses
 `update()` rather than `set()`. `set()` replaces the entire user node, which
@@ -641,14 +664,13 @@ judged is not counted a second time.
 
 ## Known limits — read before building on this
 
-1. **State syncs to Firebase, and only while signed in.** Google sign-in gates the app; the
-   keys in `PERSIST_KEYS` are debounced to Realtime Database under `users/<uid>` and read back
-   on load. Signed out there is no persistence at all.
-   `SCHEMA` guards the shape: `loadCloud` **discards** anything stored under a different
-   version rather than migrating it. Bump it when the state shape changes — that is also what
-   cleared the old demo seed out of accounts that had already saved it. Note Firebase stores no
-   empty arrays or objects at all (it deletes the key), so anything the user has legitimately
-   emptied comes back missing and is refilled from `freshState()` on load.
+1. **Offline use starts after the first successful online sign-in.** Google sign-in still
+   establishes the account. From then on, `PERSIST_KEYS` are saved device-first in IndexedDB
+   and debounced to Realtime Database under `users/<uid>`; pending device edits win on reconnect.
+   Signing out intentionally clears the device record. `SCHEMA` guards the shape and the
+   `MIGRATIONS` ladder upgrades older snapshots. Note Firebase stores no empty arrays or objects
+   at all (it deletes the key), so anything the user has legitimately emptied comes back missing
+   and is refilled from `freshState()` on load.
    *(Note: `componentDidUpdate` is called by the DC runtime with `prevProps` only — there is no
    `prevState` argument. Comparing against one throws inside a runtime `try/catch`, which
    silently disables the save. Track previous values yourself; see the comment on that method.)*
@@ -659,9 +681,7 @@ judged is not counted a second time.
 3. **There is no seed data.** A new account starts genuinely empty and every screen has an
    empty state. Nothing in the render path may assume a non-empty array — that was the whole
    class of crash when the demo data came out.
-4. **Dates are simulated.** `day` is a counter and `examDays` is a constant; there is no real
-   calendar. Wire to actual dates before trusting the pace maths.
-5. **The exam pace figure** assumes goal progress is measured in hours. Adjust if you track
+4. **The exam pace figure** assumes goal progress is measured in hours. Adjust if you track
    topics or chapters instead.
 
 ## If you're picking this up in Claude Code
