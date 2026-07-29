@@ -190,9 +190,9 @@ the local parts instead. Weeks are Monday-based to match the day strip.
 At midnight — and on load, and after a cloud read, since the stored `lastRoll`
 may be days old — `rollForward()` runs: every past day still holding work is
 written into `history`, unfinished dated tasks move to today and are marked
-`carried`, and appointments that have passed are dropped rather than dragged
-along. **Routines are deliberately not carried.** A routine is a rhythm, not a
-debt; yesterday's missed gym session is not owed today.
+`carried`. This includes ordinary tasks, automatically split parts and
+fixed-time tasks. **Routines are deliberately not carried.** A routine is a
+rhythm, not a debt; yesterday's missed gym session is not owed today.
 
 ## The model
 
@@ -223,6 +223,12 @@ whole month of weeks, or a week of days, goes in without reopening anything.
 Week slots start at the end of the current week unless that has already arrived
 — offering "due today" as the first weekly slot of a month-long plan is worse
 than useless.
+
+The breakdown sheet also offers a one-tap **automatic split**. A monthly task
+becomes four equal dated parts. A weekly task, including one of those monthly
+parts, becomes up to seven daily parts across its available days. It asks for no
+child details: names preserve the full hierarchy (`Structural Analysis — Part
+1`, then `Structural Analysis — Part 1.1`, `Part 1.2`, and so on).
 
 Day tasks carry a **description** as well as a name: the title is what it is, the
 description is what to actually do.
@@ -300,8 +306,9 @@ Undated legacy rows count as today's, never as whatever day you shifted to, and
 
 Carrying over is `rollForward`, which runs at midnight, on load, and after a
 cloud read — the stored `lastRoll` can be days old. Every unfinished dated task
-moves to today marked `carried`; finished ones and passed appointments stay put
-for the record. Today counts what came over and says so above the sessions.
+moves to today marked `carried`, including fixed-time tasks and automatically
+split parts; only finished tasks stay on their original date. Today counts what
+came over and says so above the sessions.
 
 ## Notifications will not fire from `new Notification()`
 

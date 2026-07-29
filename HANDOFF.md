@@ -115,11 +115,18 @@ notifications, recall frequency, theme, erase everything) · Goals.
 **Flow the app is built around:** add a monthly task → pick its target date →
 saving opens the weekly split of that same task → saving a week opens its days →
 "Save and add another" keeps the sheet on the same parent and steps the date on.
+The same breakdown sheet now has a no-details automatic route: months become
+four evenly dated parts, and weeks become up to seven daily parts. Nested names
+retain their path (`Parent — Part 1` → `Parent — Part 1.1`).
 
 **Verified in-browser at 320/390/412px:** the guided chain end to end,
 descriptions surviving into nested rows, drag reorder, routines appearing on
 Today, carry-forward marking a stale task `carried`, crop-and-save, hour
 editing, erase, calendar highlighting today. No page errors.
+
+**Verified in the source harness at build `2026-07-29.1`:** automatic month and
+week split counts, nested part naming, consecutive date windows, and rollover
+of ordinary tasks, split tasks and fixed-time tasks. Routines remain unchanged.
 
 ---
 
