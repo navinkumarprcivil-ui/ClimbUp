@@ -1,6 +1,6 @@
 # Handoff — where ClimbUp stands
 
-Updated for build `2026-07-29.2`. Read this first in a new session; the README has
+Updated for build `2026-07-30.1`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
 ---
@@ -24,7 +24,7 @@ of them:
    button fails with `auth/unauthorized-domain`; since the gate covers
    everything, it looks completely broken.
 3. **Hard-refresh after deploying**, or close every tab and reopen. Cache is at
-   `climbup-v26`. The worker is **network-first for the page**, so an
+   `climbup-v27`. The worker is **network-first for the page**, so an
    ordinary reload picks a new build up; a device stuck on an older
    cache-first worker needs two reloads, or Settings → App version → Refresh.
 
@@ -46,8 +46,10 @@ download instead of silently replaced.
 
 ## 2. How to change the app
 
-`index.html` is **not hand-editable** — it is a 0.65 MB self-contained bundle
-with base64 islands. Use the committed tooling:
+`index.html`'s app content is **not hand-editable** — it is a ~0.86 MB
+self-contained bundle with base64 islands. (The loading shell before those
+islands is the one exception — see the traps table.) Use the committed
+tooling:
 
 ```bash
 python3 tools/bundle.py unpack     # -> build/template.html  (edit THIS)
@@ -91,6 +93,8 @@ they are here because they will bite again.
 | `"//"` keys in `vercel.json` | Vercel validates strictly; a header route takes only `source`, `headers`, `has`, `missing`. Anything else fails the deploy. |
 | Firebase drops empty arrays/objects | A key the user has legitimately emptied comes back **missing**. `loadCloud` refills from `freshState()`. |
 | Firebase authorized domains | Every host the app is served from must be listed, or `signInWithPopup` rejects and the whole app is a dead sign-in screen. Vercel preview URLs are not covered by the production entry. |
+| `index.html`'s outer shell (everything before `<script type="__bundler/manifest">`) | Not part of `build/template.html` — `unpack`/`pack` never touch it. It is the loading screen shown while the ~0.9 MB bundle downloads and unpacks, and it is hand-edited directly in `index.html`; a `pack()` afterwards leaves it alone since `pack()` starts from the on-disk `index.html` and only replaces the `template` island. On a throttled connection it is on screen for 10+ seconds, so what it shows matters — see below. |
+| Auto-split's day formula used to spread points across the *whole* span with rounding | A week task's own span (once dated by the month split) is 8 inclusive calendar days, not 7, because only the month split's non-first parts get their start pushed a day late to stay contiguous — the first part keeps the extra day. Splitting that first part into 7 days with `round(span*i/(n-1))` then skips one real calendar day in the middle (Wed, between Tue and Thu). Fixed by anchoring day parts to the end date and walking back one day at a time (`addDays(end, i-(n-1))`, clamped so it never passes the start) — gap-free by construction, identical output to the old formula whenever the span was already exact. |
 
 ---
 
@@ -102,6 +106,16 @@ Morning / Busy Hours / Evening), a
 `date`, and a `note`. Month and week tasks carry a `targetDate`. Goals sit
 alongside and are just a name, a deadline and a tag on tasks. Routines are
 separate: they repeat by weekday, are ticked per date, and never carry.
+
+A day task also carries `carried` (bool) and `carryCount` (number, the row
+reads "carried" at 1 and "carried ×N" above that, with a title tooltip
+spelling it out). `rollForward` — the silent midnight/reopen catch-up — bumps
+`carryCount` by however many calendar days the task actually sat stale
+(`daysBetween(t.date, now)`), not by a flat 1, so a device closed for a week
+and reopened once still reads "carried ×7" rather than under-reporting it as
+once. The evening review's "Carry to tomorrow" / "Batch onto the weekend" and
+the backlog's "Move to tonight" / "Move to Saturday" are each a single
+deliberate user action, so those bump it by a flat +1 instead.
 
 **Screens.** Dashboard (month calendar, coming-up, progress at three zooms,
 what-to-improve, week bars, streak, weakest recall, slip reasons) · Today
@@ -127,14 +141,35 @@ adds/deletions have their own compact retry queue; the data URLs remain in
 account's device record. The Dashboard status chip appears only when useful;
 Settings always explains the current device/cloud state.
 
-**Opening.** A 2.4-second mark/name/glow sequence covers the first cache/auth
-work, then dissolves into the app. `prefers-reduced-motion` shortens it to a
-near-instant 250 ms.
+**Opening.** Two stages, and they now share one visual language instead of
+jump-cutting between them. First, `index.html`'s outer shell (not part of the
+template island — see traps) shows a small inline SVG mark — stem, leaves, a
+sparkle instead of a flower "bloom" — plus a "ClimbUp" wordmark, a slow
+breathing pulse, and a soft blue-violet gradient, while the ~0.9 MB bundle
+downloads and unpacks; the status line under it reads "Loading ClimbUp…" then
+"Almost there…" (error strings are untouched, on purpose, for anyone
+debugging a real failure). This used to be a generic, unrelated abstract
+flower-shaped placeholder on flat grey with a static "Unpacking…" — harmless
+on localhost where it clears in under 100 ms, but on a throttled connection it
+was the only thing on screen for 10+ seconds with no motion, which reads as a
+crash rather than a load. Second, once the real app mounts, a 2.4-second
+mark/name/glow sequence in the same gradient covers the remaining cache/auth
+work, then dissolves into the app. `prefers-reduced-motion` shortens the
+second stage to a near-instant 250 ms and drops the first stage's pulse.
 
-**Verified in-browser at 320/390/412px:** the guided chain end to end,
-descriptions surviving into nested rows, drag reorder, routines appearing on
-Today, carry-forward marking a stale task `carried`, crop-and-save, hour
-editing, erase, calendar highlighting today. No page errors.
+**Verified in-browser at 320/390/412px, and via a real Playwright run against
+`build/preview.html` with a `Date` override to cross simulated midnights:**
+the guided chain end to end (month → 4 dated week parts → up to 7 dated day
+parts per week, and a week target straight into up to 7 day parts, both with
+no split-detail questions and every part named `Parent — Part N` /
+`Parent — Part N.M`), descriptions surviving into nested rows, drag reorder,
+routines appearing on Today and never carrying, carry-forward marking a stale
+task `carried` with an accurate `carryCount` on both the Today row and the
+Plan nested drilldown, a completed task staying put on its own date, split
+day-parts carrying independently of their siblings, crop-and-save, hour
+editing, erase, calendar highlighting today, and the loading placeholder
+above. No page errors, on a fast connection or a throttled one (confirmed it
+completes rather than hangs — just proportionally slower).
 
 **Verified in the source harness at build `2026-07-29.2`:** automatic month and
 week split counts, nested part naming, consecutive date windows, rollover of
@@ -163,3 +198,14 @@ remain unchanged.
   week are filed on those future dates, so they do not appear on Today until
   that day arrives. That is the intended reading of "assigned on a daily basis"
   — confirm, or change it so they all land on today.
+- **`state.backlog` is dead.** The Today screen has a whole "Backlog" card
+  gated on `hasBacklog`/`backlogCount`, reasons, "move to tonight" / "move to
+  Saturday" — but nothing in the current code ever pushes an item into it.
+  The evening review's two destinations (`applyReview('tomorrow' | 'weekend')`)
+  write straight back into `tasks`; the reason the user picks in step 1 is
+  read back out for step 2's copy and then dropped. So the card never renders
+  and the dashboard's slip-reason chart never has data. Left alone this
+  session — reviving it is a product decision (does declining both review
+  destinations file something to backlog instead?), not a bug fix — but it is
+  the reason "reasons" and "backlog" show up throughout the code with no
+  visible effect.
