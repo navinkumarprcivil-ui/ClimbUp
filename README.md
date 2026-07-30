@@ -279,6 +279,24 @@ Three ways in, in increasing reach:
 `openDay` is the whole mechanism: Today is a window on one date and `dayOffset`
 is how far it has slid, so opening an arbitrary day is just `daysBetween`.
 
+## Splitting evenly, at both levels
+
+A month splits into **Part 1..4** (weeks); each of those splits again into
+**Part 1.1, 1.2 …** (days); a week splits straight into Part 1..N. The number
+carries the lineage, so a day task names its place in the whole plan without
+the tree being open — `partNameFor` reads the parent's own number and extends
+it, and anything not already a part starts at 1.
+
+Split asks one question and nothing else. Dates are spread across the parent's
+window, the parent's minutes are divided between the pieces, and no per-child
+sheet appears. It is offered from the **Split** control on any month or week
+row — including a nested Part — and disappears once a row has children, since
+splitting twice would append a second overlapping set.
+
+Rows carry their whole ancestry, not just their parent: a Today row reads
+`Finish structures · Part 1` above `Part 1.2`. The walk is capped at eight
+levels so a cycle in stored data cannot hang the render.
+
 ## Where tasks are added, and what Today is
 
 Every task with a target above it is added on **Plan**, at whichever of the
