@@ -29,5 +29,21 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Today's tasks",
+      "short_name": "Today",
+      "description": "Open straight to today's sessions and tasks.",
+      "url": "./?screen=today",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Plan",
+      "short_name": "Plan",
+      "description": "Open the Plan screen to add or break down a target.",
+      "url": "./?screen=plan",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
   ]
 }

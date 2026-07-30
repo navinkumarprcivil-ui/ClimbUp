@@ -1,6 +1,6 @@
 # Handoff — where ClimbUp stands
 
-Updated for build `2026-07-30.1`. Read this first in a new session; the README has
+Updated for build `2026-07-30.2`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
 ---
@@ -24,7 +24,7 @@ of them:
    button fails with `auth/unauthorized-domain`; since the gate covers
    everything, it looks completely broken.
 3. **Hard-refresh after deploying**, or close every tab and reopen. Cache is at
-   `climbup-v27`. The worker is **network-first for the page**, so an
+   `climbup-v28`. The worker is **network-first for the page**, so an
    ordinary reload picks a new build up; a device stuck on an older
    cache-first worker needs two reloads, or Settings → App version → Refresh.
 
@@ -198,14 +198,27 @@ remain unchanged.
   week are filed on those future dates, so they do not appear on Today until
   that day arrives. That is the intended reading of "assigned on a daily basis"
   — confirm, or change it so they all land on today.
-- **`state.backlog` is dead.** The Today screen has a whole "Backlog" card
-  gated on `hasBacklog`/`backlogCount`, reasons, "move to tonight" / "move to
-  Saturday" — but nothing in the current code ever pushes an item into it.
-  The evening review's two destinations (`applyReview('tomorrow' | 'weekend')`)
-  write straight back into `tasks`; the reason the user picks in step 1 is
-  read back out for step 2's copy and then dropped. So the card never renders
-  and the dashboard's slip-reason chart never has data. Left alone this
-  session — reviving it is a product decision (does declining both review
-  destinations file something to backlog instead?), not a bug fix — but it is
-  the reason "reasons" and "backlog" show up throughout the code with no
-  visible effect.
+- **The backlog is now wired up** (was dead — see history below). Two paths
+  file into `state.backlog`: (1) the evening review's third destination "Set
+  aside for now" (`reviewToBacklog`), which files every slipped task with the
+  reason chosen in step 1 — so the reason the user picks now actually reaches
+  the dashboard's slip-reason chart; and (2) a "Set aside" action that appears
+  on any Today row carried ≥3 times (`parkTask`), for parking a single repeat
+  offender without opening the review. Parked items keep `carryCount`, so
+  "Do today"/"Weekend" from the backlog card bring them back with history
+  intact. The backlog card and the dashboard chart were always built and
+  correct — they simply never had data before. *Historic note for context: up
+  to build `2026-07-30.1` nothing populated `state.backlog` at all, so the
+  card never rendered and the slip-reason chart was always empty.*
+- **A chronically-carried task now has an exit ramp.** A day task carried ≥3
+  times gets its `carried ×N` tag in the attention colour, a one-line nudge at
+  the top of Today, and the "Set aside" action above. Below 3 it stays quiet,
+  so an ordinary one-day slip is not nagged.
+- **Home-screen shortcuts.** `manifest.webmanifest` declares `shortcuts` for
+  Today (`./?screen=today`) and Plan (`./?screen=plan`); `applyLaunchScreen()`
+  reads `?screen=` on mount and opens there. This is as close to a native
+  home-screen *widget* as a PWA can get — long-press the installed icon for
+  quick jumps — but it is **not** a live widget (no web API exists for one on
+  iOS or Android; that needs a native wrapper). The SW already serves the
+  cached page for any navigation, so the query-string URLs work offline with
+  no SW change.
