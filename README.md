@@ -630,7 +630,9 @@ The previous mark was embedded in the bundle. Task2Day now uses the supplied
 brand artwork as shared external icon assets for the loading screen, sign-in,
 header, Settings, browser tab and installed PWA. This avoids shipping a second,
 stale logo inside the base64 bundle and keeps every visible surface on the same
-artwork.
+artwork. The connected outer background is removed with an edge flood-fill,
+then the alpha contour is supersampled before each icon size is rendered, so
+the rounded silhouette stays smooth without changing the lettering or calendar.
 
 Assets are referenced from **two** islands: `__bundler/template` and
 `__bundler/ext_resources`. React and ReactDOM appear only in the latter — prune
