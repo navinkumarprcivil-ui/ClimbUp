@@ -1,4 +1,4 @@
-/* ClimbUp service worker — offline app shell.
+/* Task2Day service worker — offline app shell.
 
    The app IS index.html and its name never changes, so a cache-first rule for
    it is a trap: the page is served from cache forever, and the only thing that
@@ -11,8 +11,17 @@
    those genuinely do not change and are what make an offline open fast.
 
    Bump CACHE when you redeploy anyway; it clears the old entries out. */
-const CACHE = 'climbup-v27';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CACHE = 'task2day-v28';
+const SHELL = [
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png',
+  './apple-touch-icon.png',
+  './favicon-32.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

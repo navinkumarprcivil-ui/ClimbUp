@@ -1,4 +1,4 @@
-# ClimbUp — Task, Study, Steady growth
+# Task2Day — Task, Study, Steady growth
 
 A daily task and study planner built around one idea: **you should be able to see yourself falling behind.**
 Set a monthly target, break it into weekly, break those into daily, then open Today and drag
@@ -84,7 +84,7 @@ network-first worker a single reload is enough.
 
 ### Offline use and sync
 
-After one successful online sign-in and load, ClimbUp is fully usable without a
+After one successful online sign-in and load, Task2Day is fully usable without a
 connection. The service worker provides the app shell; an IndexedDB record
 provides the signed-in account and every key in `PERSIST_KEYS`. Changes are
 written to the device first, marked pending, and uploaded to
@@ -181,7 +181,9 @@ codebase has already produced.
 | `index.html` | The whole app — markup, logic, styles and fonts inlined |
 | `manifest.webmanifest` | Makes it installable; name, icons, standalone display |
 | `sw.js` | Service worker — caches the shell so it opens offline |
-| `icon-192.png` / `icon-512.png` | App icons (the ClimbUp bamboo mark) |
+| `icon-192.png` / `icon-512.png` | Standard Task2Day app icons |
+| `icon-maskable-512.png` | Padded Task2Day icon for Android maskable shapes |
+| `apple-touch-icon.png` / `favicon-32.png` | Apple home-screen and browser-tab icons |
 | `vercel.json` | Cache and security headers for the Vercel deploy |
 | `tools/bundle.py` | Unpack/pack the islands inside `index.html` |
 | `tools/preview.py` | Build a sign-in-stubbed copy for testing |
@@ -348,7 +350,7 @@ front of the entry the app loaded on; back pops it, the handler pushes it
 straight back, and the press is spent unwinding the UI instead — deepest
 overlay first (cropper, recall, review, then any open sheet), then any screen
 back to the **dashboard**. Only from the dashboard does it ask *Leave
-ClimbUp?*, and a second back press there is read as *stay*.
+Task2Day?*, and a second back press there is read as *stay*.
 
 The sentinel is laid down on sign-in, not on mount. Laid down earlier it
 swallows the first back press on the sign-in screen, where back should just be
@@ -620,15 +622,15 @@ and never gates. Everything stands down under `prefers-reduced-motion: reduce`.
 
 | | before | after |
 | --- | --- | --- |
-| `index.html` | 2.20 MB | 0.58 MB |
-| gzipped | 1642 KB | 386 KB |
+| `index.html` | 2.20 MB | 0.79 MB |
+| gzipped | 1642 KB | 463 KB |
 | DOMContentLoaded, Fast 3G | 11.8 s | 3.2 s |
 
-Most of it was the logo: a 1024×1024, 1.15 MB PNG shown at 96px, carrying an
-opaque white background that read as a white tile on the paper ground and a
-bright box in dark mode. It is now 256px with the backdrop knocked out by an
-edge flood-fill — flood-fill, not a white key, because the book, the checklist
-and the star highlights are white too and have to survive.
+The previous mark was embedded in the bundle. Task2Day now uses the supplied
+brand artwork as shared external icon assets for the loading screen, sign-in,
+header, Settings, browser tab and installed PWA. This avoids shipping a second,
+stale logo inside the base64 bundle and keeps every visible surface on the same
+artwork.
 
 Assets are referenced from **two** islands: `__bundler/template` and
 `__bundler/ext_resources`. React and ReactDOM appear only in the latter — prune

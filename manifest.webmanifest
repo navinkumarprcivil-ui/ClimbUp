@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "ClimbUp — Task, Study, Steady growth",
-  "short_name": "ClimbUp",
+  "name": "Task2Day — Task, Study, Steady growth",
+  "short_name": "Task2Day",
   "description": "Task, Study, Steady growth — a daily planner with backlog pressure and active-recall revision.",
   "start_url": "./",
   "scope": "./",
@@ -24,7 +24,7 @@
       "purpose": "any"
     },
     {
-      "src": "./icon-512.png",
+      "src": "./icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
