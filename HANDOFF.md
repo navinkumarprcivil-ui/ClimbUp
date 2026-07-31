@@ -1,6 +1,6 @@
-# Handoff — where ClimbUp stands
+# Handoff — where Task2Day stands
 
-Updated for build `2026-07-30.1`. Read this first in a new session; the README has
+Updated for build `2026-07-31.1`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
 ---
@@ -24,7 +24,7 @@ of them:
    button fails with `auth/unauthorized-domain`; since the gate covers
    everything, it looks completely broken.
 3. **Hard-refresh after deploying**, or close every tab and reopen. Cache is at
-   `climbup-v27`. The worker is **network-first for the page**, so an
+   `task2day-v28`. The worker is **network-first for the page**, so an
    ordinary reload picks a new build up; a device stuck on an older
    cache-first worker needs two reloads, or Settings → App version → Refresh.
 
@@ -143,10 +143,9 @@ Settings always explains the current device/cloud state.
 
 **Opening.** Two stages, and they now share one visual language instead of
 jump-cutting between them. First, `index.html`'s outer shell (not part of the
-template island — see traps) shows a small inline SVG mark — stem, leaves, a
-sparkle instead of a flower "bloom" — plus a "ClimbUp" wordmark, a slow
-breathing pulse, and a soft blue-violet gradient, while the ~0.9 MB bundle
-downloads and unpacks; the status line under it reads "Loading ClimbUp…" then
+template island — see traps) shows the supplied Task2Day logo and wordmark with
+a slow breathing pulse and a soft blue-violet gradient, while the ~0.9 MB bundle
+downloads and unpacks; the status line under it reads "Loading Task2Day…" then
 "Almost there…" (error strings are untouched, on purpose, for anyone
 debugging a real failure). This used to be a generic, unrelated abstract
 flower-shaped placeholder on flat grey with a static "Unpacking…" — harmless

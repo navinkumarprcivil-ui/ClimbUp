@@ -11,6 +11,7 @@ calling Firebase at all. index.html is not touched.
 """
 import json
 import os
+import shutil
 
 from bundle import BUILD, TEMPLATE, load, write_island
 
@@ -35,4 +36,7 @@ if __name__ == '__main__':
 
     encoded = json.dumps(template, ensure_ascii=False).replace('</', '<\\u002F')
     open(OUT, 'w', encoding='utf-8').write(write_island(load(), 'template', encoded))
+    for name in ('icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
+                 'apple-touch-icon.png', 'favicon-32.png', 'manifest.webmanifest'):
+        shutil.copy2(os.path.join(os.path.dirname(BUILD), name), os.path.join(BUILD, name))
     print('wrote', OUT)
