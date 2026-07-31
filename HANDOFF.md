@@ -1,6 +1,6 @@
 # Handoff — where Task2Day stands
 
-Updated for build `2026-07-31.1`. Read this first in a new session; the README has
+Updated for build `2026-07-31.2`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
 ---
@@ -24,7 +24,7 @@ of them:
    button fails with `auth/unauthorized-domain`; since the gate covers
    everything, it looks completely broken.
 3. **Hard-refresh after deploying**, or close every tab and reopen. Cache is at
-   `task2day-v28`. The worker is **network-first for the page**, so an
+   `task2day-v29`. The worker is **network-first for the page**, so an
    ordinary reload picks a new build up; a device stuck on an older
    cache-first worker needs two reloads, or Settings → App version → Refresh.
 
