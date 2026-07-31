@@ -1,6 +1,6 @@
 # Handoff — where Task2Day stands
 
-Updated for build `2026-07-31.2`. Read this first in a new session; the README has
+Updated for build `2026-07-31.3`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
 ---
@@ -24,7 +24,7 @@ of them:
    button fails with `auth/unauthorized-domain`; since the gate covers
    everything, it looks completely broken.
 3. **Hard-refresh after deploying**, or close every tab and reopen. Cache is at
-   `task2day-v29`. The worker is **network-first for the page**, so an
+   `task2day-v30`. The worker is **network-first for the page**, so an
    ordinary reload picks a new build up; a device stuck on an older
    cache-first worker needs two reloads, or Settings → App version → Refresh.
 
@@ -141,20 +141,17 @@ adds/deletions have their own compact retry queue; the data URLs remain in
 account's device record. The Dashboard status chip appears only when useful;
 Settings always explains the current device/cloud state.
 
-**Opening.** Two stages, and they now share one visual language instead of
-jump-cutting between them. First, `index.html`'s outer shell (not part of the
-template island — see traps) shows the supplied Task2Day logo and wordmark with
-a slow breathing pulse and a soft blue-violet gradient, while the ~0.9 MB bundle
-downloads and unpacks; the status line under it reads "Loading Task2Day…" then
-"Almost there…" (error strings are untouched, on purpose, for anyone
-debugging a real failure). This used to be a generic, unrelated abstract
-flower-shaped placeholder on flat grey with a static "Unpacking…" — harmless
-on localhost where it clears in under 100 ms, but on a throttled connection it
-was the only thing on screen for 10+ seconds with no motion, which reads as a
-crash rather than a load. Second, once the real app mounts, a 2.4-second
-mark/name/glow sequence in the same gradient covers the remaining cache/auth
-work, then dissolves into the app. `prefers-reduced-motion` shortens the
-second stage to a near-instant 250 ms and drops the first stage's pulse.
+**Opening.** There is one startup stage. `index.html`'s outer shell (not part of
+the template island — see traps) shows the supplied Task2Day logo and wordmark
+with a slow breathing pulse and a soft blue-violet gradient while the ~0.9 MB
+bundle downloads and unpacks. Its status moves from "Loading Task2Day…" to
+"Almost there…", waits only when a very fast launch would otherwise flash, and
+then fades directly into the mounted app. The former second 2.4-second in-app
+intro has been removed, so the logo sequence cannot restart after the bundle
+mounts. A service worker's first installation also claims the open page without
+reloading it; only replacement of an existing worker triggers the guarded
+one-time reload. Real errors keep the loader visible with their diagnostic text.
+`prefers-reduced-motion` removes both the pulse and the minimum/fade delay.
 
 **Verified in-browser at 320/390/412px, and via a real Playwright run against
 `build/preview.html` with a `Date` override to cross simulated midnights:**
