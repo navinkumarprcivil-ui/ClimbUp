@@ -290,6 +290,11 @@ whether or not it is "work".
 - **Settings** — your available hours per session (capacity is the span between
   them), office days, notifications, recall frequency, theme, erase everything.
 
+Plan includes one search field above the Month, Week and Day lists. It searches
+task titles, notes, parent targets and linked goals across all three scopes;
+results keep their scope and date visible and open through the existing Edit
+action. Clearing the query restores the selected Plan tab and its drag order.
+
 ## Reaching a particular date
 
 Three ways in, in increasing reach:
