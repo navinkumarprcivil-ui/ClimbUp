@@ -1,6 +1,6 @@
 # Handoff — where Task2Day stands
 
-Updated for build `2026-07-31.3`. Read this first in a new session; the README has
+Updated for build `2026-07-31.4`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
 ---
@@ -24,7 +24,7 @@ of them:
    button fails with `auth/unauthorized-domain`; since the gate covers
    everything, it looks completely broken.
 3. **Hard-refresh after deploying**, or close every tab and reopen. Cache is at
-   `task2day-v30`. The worker is **network-first for the page**, so an
+   `task2day-v31`. The worker is **network-first for the page**, so an
    ordinary reload picks a new build up; a device stuck on an older
    cache-first worker needs two reloads, or Settings → App version → Refresh.
 
@@ -120,7 +120,7 @@ deliberate user action, so those bump it by a flat +1 instead.
 **Screens.** Dashboard (month calendar, coming-up, progress at three zooms,
 what-to-improve, week bars, streak, weakest recall, slip reasons) · Today
 (routines + tasks per session, long-press to drag into order, backlog, review)
-· Plan (Month/Week tabs, guided breakdown) · Daily routine · Revise (topic
+· Plan (Month/Week/Day tabs, guided breakdown, cross-scope task search) · Daily routine · Revise (topic
 groups, image cards with a pan-and-pinch cropper, "revise all") · Settings
 (editable hours per session — capacity is the span between them — office days,
 notifications, recall frequency, theme, erase everything) · Goals.
