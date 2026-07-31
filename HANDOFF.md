@@ -1,7 +1,24 @@
 # Handoff — where ClimbUp stands
 
-Updated for build `2026-07-30.2`. Read this first in a new session; the README has
+Updated for build `2026-07-30.3`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
+
+**The app is now named "Task2Day"** (was "ClimbUp"). Only display strings
+changed — the manifest name/short_name, the `<title>`, headings, the loading
+shell wordmark, install/notification/sync copy, and the backup export
+filename. Storage identity was deliberately left as-is: `OFFLINE_DB` is still
+`climbup-offline`, the SW cache is still `climbup-v29`, `localStorage`
+keys stay `sp.*`, and the Firebase project is still `climbup-a9bdd`. Renaming
+any of those would orphan every existing user's local data and their cloud
+account, so the internal `climbup` identifiers stay put on purpose — do not
+"finish the rename" by touching them.
+
+**Palette is warm now** (a cream/peach reskin toward a task-app reference).
+It is entirely in the `:root` and `.app[data-theme="dark"]` token blocks plus
+the two loading gradients — `--color-bg` is cream `#fdf2e4`, the accents
+(teal + magenta) are unchanged and read as the reference's teal + coral on
+cream. The `index.html` loading shell and the manifest `theme_color` were
+warmed to match by hand (they are outside the template island — see traps).
 
 ---
 
@@ -24,7 +41,7 @@ of them:
    button fails with `auth/unauthorized-domain`; since the gate covers
    everything, it looks completely broken.
 3. **Hard-refresh after deploying**, or close every tab and reopen. Cache is at
-   `climbup-v28`. The worker is **network-first for the page**, so an
+   `climbup-v29`. The worker is **network-first for the page**, so an
    ordinary reload picks a new build up; a device stuck on an older
    cache-first worker needs two reloads, or Settings → App version → Refresh.
 
