@@ -1,9 +1,9 @@
 # Task2Day — Task, Study, Steady growth
 
 A daily task and study planner built around one idea: **you should be able to see yourself falling behind.**
-Set a monthly target, break it into weekly, break those into daily, then open Today and drag
-the day into the order you'll actually do it. Review the day, and watch the backlog build if
-you don't.
+Set a monthly target, break it into weekly, break those into daily, then open Today and order
+the untimed work the way you'll actually do it. Review the day, record why anything slipped,
+and rate how satisfied you were with your productivity.
 
 Single self-contained page. No build step, no dependencies, no server.
 
@@ -217,6 +217,11 @@ written into `history`, unfinished dated tasks move to today and are marked
 fixed-time tasks. **Routines are deliberately not carried.** A routine is a
 rhythm, not a debt; yesterday's missed gym session is not owed today.
 
+A rolled day is marked as awaiting review, including a genuine zero-task rest
+day. The Dashboard points to the newest unreviewed past day so its missing
+reasons and 0–10 satisfaction score can be filled later; completing that review
+updates the existing history record without carrying the tasks a second time.
+
 ## The model
 
 One task type at three zooms, not three separate things:
@@ -229,9 +234,9 @@ month task  ──breaks into──▶  week task  ──breaks into──▶  d
 Every task carries a `scope` (`month` | `week` | `day`) and a `parent`. A day
 task additionally has a `block` — which session of the day it sits in. So
 "monthly targets broken into weekly, broken into daily" and "weekly and monthly
-tasks I can organise" are the same list at a different zoom, which is why one
-drag implementation orders all three and there is no second hierarchy to keep in
-sync. Deleting a parent takes its whole subtree with it.
+tasks I can organise" are the same list at a different zoom. Plan shows all
+three scopes in date order; long-press ordering is reserved for untimed work on
+Today. Deleting a parent takes its whole subtree with it.
 
 Goals sit alongside, not above: a goal is a name and a deadline, and any task at
 any scope can be tagged to one. Progress is just the share of its tagged tasks
@@ -247,11 +252,14 @@ Week slots start at the end of the current week unless that has already arrived
 — offering "due today" as the first weekly slot of a month-long plan is worse
 than useless.
 
-The breakdown sheet also offers a one-tap **automatic split**. A monthly task
-becomes four equal dated parts. A weekly task, including one of those monthly
-parts, becomes up to seven daily parts across its available days. It asks for no
-child details: names preserve the full hierarchy (`Structural Analysis — Part
-1`, then `Structural Analysis — Part 1.1`, `Part 1.2`, and so on).
+The breakdown sheet also offers a one-tap **automatic split**. It uses every
+available date continuously, starting tomorrow (or the task's explicit future
+start date) and ending on the target date. A monthly task becomes as many full
+seven-day week targets as fit, followed by one daily target for each remaining
+date: a target 38 days away therefore becomes 5 weeks + 3 days. Every generated
+week expands into its exact consecutive dates with no gaps. It asks for no child
+details, and names preserve the full hierarchy (`Structural Analysis — Part 1`,
+then `Structural Analysis — Part 1.1`, `Part 1.2`, and so on).
 
 Day tasks carry a **description** as well as a name: the title is what it is, the
 description is what to actually do.
@@ -263,26 +271,32 @@ date rather than once, never carries over, and is stored with a `done` map keyed
 by date. They appear inside the Today sessions alongside tasks and count against
 that session's capacity, because an hour of badminton occupies the evening
 whether or not it is "work".
+Done and skipped routines are mutually exclusive per date. A skipped or simply
+missed routine appears in that day's review and its reason is retained in day
+history.
 
 ## Screens
 
 - **Dashboard** — the home page. A real month calendar marking targets falling
   due (magenta), days with work on them (blue) and days finished clean (ring);
   what is coming up in the next fortnight; progress at all three zooms — today,
-  this week, this month — each over its own real window; then what to improve,
-  where the day goes session by session, the week bars, streak and freezes,
-  weakest recall and slip reasons. Every line of advice is derived from data you
-  actually entered; with an empty account it says so instead of inventing
-  numbers.
+  this week, this month — each over its own real window; a weekly planned vs
+  done vs skipped comparison, where postponement clusters and why; then what to
+  improve, the week bars, streak and freezes, and weakest recall. A visible
+  prompt opens the newest previous-day review still waiting. Every line of
+  advice is derived from data you actually entered.
 - **Daily routine** — a **section of Settings**, not a screen. It describes
   your week rather than your day: name, description, session, minutes and which
   weekdays. Today only points at it — *Add a daily routine* while none is set,
   a quieter *Edit daily routine* once one is.
 - **Today** — that day's tasks only, grouped into Morning / Busy Hours / Evening,
-  **press and hold to drag into the order you want to do them**. Capacity bar
-  per session, fixed appointments, backlog, review-the-day.
-- **Plan** — Month and Week tabs. Same drag-to-order, plus *Break into weekly* /
-  *Break into daily*, and each parent shows its children inline.
+  timed tasks in clock order and **press and hold to order untimed tasks**.
+  Marking a task done asks for actual minutes; the capacity bar then uses actual
+  time instead of deleting the completed work. Tasks and routines can be
+  skipped with a reason. Review records reasons, a 0–10 satisfaction score, and
+  offers carry destinations only when unfinished tasks exist.
+- **Plan** — Month, Week and Day tabs, each in date order. Includes *Break into
+  weekly* / *Break into daily*, and each parent shows its children inline.
 - **Revise** — **subjects** (Computer networks, Structural analysis), each
   holding image cards under a **formula or heading**.
   *Revise all* walks a whole group in one pass rather than interrupting one card
@@ -293,7 +307,7 @@ whether or not it is "work".
 Plan includes one search field above the Month, Week and Day lists. It searches
 task titles, notes, parent targets and linked goals across all three scopes;
 results keep their scope and date visible and open through the existing Edit
-action. Clearing the query restores the selected Plan tab and its drag order.
+action. Clearing the query restores the selected Plan tab and its date order.
 
 ## Reaching a particular date
 
@@ -416,14 +430,13 @@ does not pop, which is one more entry in the `blocked` list in `schedule`
 alongside an open overlay, a running timer, the daily cap and a fixed
 appointment.
 
-## Ordering, and why priority no longer sorts
+## Ordering
 
-`order` is the only thing that ranks tasks within a list, and drag is the only
-thing that writes it. Priority still picks the badge a row wears (*Do first*,
-*Must do*, *Skip if short*) but it does **not** re-sort — an automatic rank that
-silently overrode a drag would make the gesture feel broken. Appointments stay
-pinned first in clock order and finished tasks sink to the bottom regardless,
-which is why neither is draggable.
+Plan is always sorted by its real date (`targetDate` for month/week and `date`
+for day). It is not draggable. On Today, timed tasks stay first in clock order.
+`order` ranks only the remaining untimed, unfinished tasks and long-press is the
+only thing that writes it; priority is a fallback for legacy rows with no order.
+Timed and finished tasks are not draggable.
 
 The drag is delegated from the document and keyed on `data-list` / `data-id`, so
 it survives re-renders without per-row refs, and it never calls `setState` until
