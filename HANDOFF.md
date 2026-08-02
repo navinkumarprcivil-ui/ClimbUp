@@ -1,6 +1,6 @@
 # Handoff — where Task2Day stands
 
-Updated for build `2026-07-31.4`. Read this first in a new session; the README has
+Updated for build `2026-08-02.1`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
 ---
@@ -118,9 +118,12 @@ the backlog's "Move to tonight" / "Move to Saturday" are each a single
 deliberate user action, so those bump it by a flat +1 instead.
 
 **Screens.** Dashboard (month calendar, coming-up, progress at three zooms,
-what-to-improve, week bars, streak, weakest recall, slip reasons) · Today
-(routines + tasks per session, long-press to drag into order, backlog, review)
-· Plan (Month/Week/Day tabs, guided breakdown, cross-scope task search) · Daily routine · Revise (topic
+weekly planned/done/skipped, session/reason procrastination patterns, pending
+past-review prompt, week bars, streak, weakest recall) · Today (routines +
+tasks per session, clock-ordered timed work, long-press order for untimed work,
+actual-minutes completion, task/routine skips, backlog, review with a 0–10
+satisfaction score) · Plan (date-ordered Month/Week/Day tabs, guided breakdown,
+cross-scope task search) · Daily routine · Revise (topic
 groups, image cards with a pan-and-pinch cropper, "revise all") · Settings
 (editable hours per session — capacity is the span between them — office days,
 notifications, recall frequency, theme, erase everything) · Goals.
@@ -128,9 +131,11 @@ notifications, recall frequency, theme, erase everything) · Goals.
 **Flow the app is built around:** add a monthly task → pick its target date →
 saving opens the weekly split of that same task → saving a week opens its days →
 "Save and add another" keeps the sheet on the same parent and steps the date on.
-The same breakdown sheet now has a no-details automatic route: months become
-four evenly dated parts, and weeks become up to seven daily parts. Nested names
-retain their path (`Parent — Part 1` → `Parent — Part 1.1`).
+The same breakdown sheet now has a no-details automatic route that covers every
+available date continuously. Months become full seven-day week targets followed
+by daily targets for any remainder (38 days = 5 weeks + 3 days), and every week
+expands into its exact consecutive dates without gaps. Nested names retain their
+path (`Parent — Part 1` → `Parent — Part 1.1`).
 
 **Offline-first.** After one online sign-in, the app restores the account and
 all `PERSIST_KEYS` from IndexedDB, lets every ordinary task and split-task flow
@@ -167,11 +172,14 @@ editing, erase, calendar highlighting today, and the loading placeholder
 above. No page errors, on a fast connection or a throttled one (confirmed it
 completes rather than hangs — just proportionally slower).
 
-**Verified in the source harness at build `2026-07-29.2`:** automatic month and
-week split counts, nested part naming, consecutive date windows, rollover of
-ordinary tasks, split tasks and fixed-time tasks, IndexedDB restore, offline
-device writes, reconnect upload and queued card-image operations. Routines
-remain unchanged.
+**Verified in the source harness at build `2026-08-02.1`:** date-ordered Plan
+rows with Plan drag disabled; clock ordering plus manual untimed ordering on
+Today; actual-minutes completion and capacity retention; direct task/routine
+skip reasons; weekly planned/done/skipped aggregation; satisfaction review;
+zero-task reviews bypassing carry options; and every previous day, including an
+empty rest day, remaining reviewable from the Dashboard after rollover. Automatic
+split, rollover,
+offline and image-queue harness coverage remains intact.
 
 ---
 
@@ -194,14 +202,11 @@ remain unchanged.
   week are filed on those future dates, so they do not appear on Today until
   that day arrives. That is the intended reading of "assigned on a daily basis"
   — confirm, or change it so they all land on today.
-- **`state.backlog` is dead.** The Today screen has a whole "Backlog" card
+- **`state.backlog` is still dead.** The Today screen has a whole "Backlog" card
   gated on `hasBacklog`/`backlogCount`, reasons, "move to tonight" / "move to
   Saturday" — but nothing in the current code ever pushes an item into it.
   The evening review's two destinations (`applyReview('tomorrow' | 'weekend')`)
-  write straight back into `tasks`; the reason the user picks in step 1 is
-  read back out for step 2's copy and then dropped. So the card never renders
-  and the dashboard's slip-reason chart never has data. Left alone this
-  session — reviving it is a product decision (does declining both review
-  destinations file something to backlog instead?), not a bug fix — but it is
-  the reason "reasons" and "backlog" show up throughout the code with no
-  visible effect.
+  write straight back into `tasks`, so the card still never renders. Review
+  reasons no longer depend on backlog: they are preserved in `history` and
+  drive the Dashboard's planned/done/skipped, session and reason analysis.
+  Reviving backlog remains a separate product decision.
