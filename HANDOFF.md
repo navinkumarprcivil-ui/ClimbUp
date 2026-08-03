@@ -1,6 +1,6 @@
 # Handoff — where Task2Day stands
 
-Updated for build `2026-08-02.1`. Read this first in a new session; the README has
+Updated for build `2026-08-03.1`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
 ---
@@ -34,7 +34,7 @@ Then record the new URL in this file and in the README.
 Revise`, the dashboard opens on a month calendar with today ringed, and the
 middle session is called **Busy Hours** rather than Office or Noon.
 
-`SCHEMA` is 4 and old data goes through the `MIGRATIONS` ladder. Never bump it
+`SCHEMA` is 5 and old data goes through the `MIGRATIONS` ladder. Never bump it
 without adding the next migration. An unreadable/future snapshot is held for
 download instead of silently replaced.
 
@@ -100,12 +100,12 @@ they are here because they will bite again.
 
 ## 4. What exists now
 
-**Model.** One task type at three zooms — `scope` is `month | week | day`, with
-a `parent` link. A day task also has a `block` (keys `morning` / `noon` / `evening`, labelled
-Morning / Busy Hours / Evening), a
-`date`, and a `note`. Month and week tasks carry a `targetDate`. Goals sit
-alongside and are just a name, a deadline and a tag on tasks. Routines are
-separate: they repeat by weekday, are ticked per date, and never carry.
+**Model.** Adding a task is date-first; the user never chooses a scope. A
+due-date-only task is `day`. A regular-contribution task is a neutral `target`,
+which derives `month | week | day` descendants through `parent` links. A final
+day task has a `block` (keys `morning` / `noon` / `evening`, labelled Morning /
+Busy Hours / Evening), a `date`, and a `note`. Goals remain optional task tags.
+Routines repeat by weekday, are ticked per date, and never carry.
 
 A day task also carries `carried` (bool) and `carryCount` (number, the row
 reads "carried" at 1 and "carried ×N" above that, with a title tooltip
@@ -122,20 +122,18 @@ weekly planned/done/skipped, session/reason procrastination patterns, pending
 past-review prompt, week bars, streak, weakest recall) · Today (routines +
 tasks per session, clock-ordered timed work, long-press order for untimed work,
 actual-minutes completion, task/routine skips, backlog, review with a 0–10
-satisfaction score) · Plan (date-ordered Month/Week/Day tabs, guided breakdown,
-cross-scope task search) · Daily routine · Revise (topic
+satisfaction score) · Plan (one date-ordered list, date-first task form,
+intent-driven guided breakdown and tree search) · Daily routine · Revise (topic
 groups, image cards with a pan-and-pinch cropper, "revise all") · Settings
 (editable hours per session — capacity is the span between them — office days,
 notifications, recall frequency, theme, erase everything) · Goals.
 
-**Flow the app is built around:** add a monthly task → pick its target date →
-saving opens the weekly split of that same task → saving a week opens its days →
-"Save and add another" keeps the sheet on the same parent and steps the date on.
-The same breakdown sheet now has a no-details automatic route that covers every
-available date continuously. Months become full seven-day week targets followed
-by daily targets for any remainder (38 days = 5 weeks + 3 days), and every week
-expands into its exact consecutive dates without gaps. Nested names retain their
-path (`Parent — Part 1` → `Parent — Part 1.1`).
+**Flow the app is built around:** add a task → pick its completion date → choose
+"Only on this date" or "Needs regular contribution". The former remains one day
+task. The latter stays a neutral target until its Break action derives continuous
+28-day months, seven-day weeks and remainder days. Thus 38 days becomes 1 month
++ 1 week + 3 days; the month becomes four equal weeks and each week becomes its
+consecutive day tasks with the same daily estimate.
 
 **Offline-first.** After one online sign-in, the app restores the account and
 all `PERSIST_KEYS` from IndexedDB, lets every ordinary task and split-task flow
@@ -158,12 +156,9 @@ reloading it; only replacement of an existing worker triggers the guarded
 one-time reload. Real errors keep the loader visible with their diagnostic text.
 `prefers-reduced-motion` removes both the pulse and the minimum/fade delay.
 
-**Verified in-browser at 320/390/412px, and via a real Playwright run against
-`build/preview.html` with a `Date` override to cross simulated midnights:**
-the guided chain end to end (month → 4 dated week parts → up to 7 dated day
-parts per week, and a week target straight into up to 7 day parts, both with
-no split-detail questions and every part named `Parent — Part N` /
-`Parent — Part N.M`), descriptions surviving into nested rows, drag reorder,
+**Earlier builds were verified in-browser at 320/390/412px, and via a real
+Playwright run against `build/preview.html` with a `Date` override to cross
+simulated midnights:** descriptions surviving into nested rows, Today drag reorder,
 routines appearing on Today and never carrying, carry-forward marking a stale
 task `carried` with an accurate `carryCount` on both the Today row and the
 Plan nested drilldown, a completed task staying put on its own date, split
@@ -172,13 +167,15 @@ editing, erase, calendar highlighting today, and the loading placeholder
 above. No page errors, on a fast connection or a throttled one (confirmed it
 completes rather than hangs — just proportionally slower).
 
-**Verified in the source harness at build `2026-08-02.1`:** date-ordered Plan
-rows with Plan drag disabled; clock ordering plus manual untimed ordering on
-Today; actual-minutes completion and capacity retention; direct task/routine
+**Verified in the source harness at build `2026-08-03.1`:** unified date-ordered
+Plan without scope selectors; due-date-only task creation; a 38-day target
+becoming 1 month + 1 week + 3 days; a month becoming four equal weeks; each week
+becoming seven consecutive equal-minute day tasks; clock ordering plus manual
+untimed ordering on Today with Plan drag disabled; actual-minutes completion
+and capacity retention; direct task/routine
 skip reasons; weekly planned/done/skipped aggregation; satisfaction review;
 zero-task reviews bypassing carry options; and every previous day, including an
-empty rest day, remaining reviewable from the Dashboard after rollover. Automatic
-split, rollover,
+empty rest day, remaining reviewable from the Dashboard after rollover. Rollover,
 offline and image-queue harness coverage remains intact.
 
 ---

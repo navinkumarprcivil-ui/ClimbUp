@@ -1,9 +1,9 @@
 # Task2Day — Task, Study, Steady growth
 
 A daily task and study planner built around one idea: **you should be able to see yourself falling behind.**
-Set a monthly target, break it into weekly, break those into daily, then open Today and order
-the untimed work the way you'll actually do it. Review the day, record why anything slipped,
-and rate how satisfied you were with your productivity.
+Give a task its completion date and say whether it belongs only on that date or
+needs regular contribution before it. Break contribution targets down by their
+available dates, then open Today and order the untimed work you will actually do.
 
 Single self-contained page. No build step, no dependencies, no server.
 
@@ -224,42 +224,29 @@ updates the existing history record without carrying the tasks a second time.
 
 ## The model
 
-One task type at three zooms, not three separate things:
+The user never selects Month, Week or Day. Every new task starts with one date
+and one intent:
 
-```
-month task  ──breaks into──▶  week task  ──breaks into──▶  day task
-                                                            └─ lands in a session
-```
+- **Only on this date** creates one `day` task. It appears in Today on that date.
+- **Needs regular contribution** creates a neutral `target`. Its available dates
+  determine the month, week and day parts when the user breaks it down.
 
-Every task carries a `scope` (`month` | `week` | `day`) and a `parent`. A day
-task additionally has a `block` — which session of the day it sits in. So
-"monthly targets broken into weekly, broken into daily" and "weekly and monthly
-tasks I can organise" are the same list at a different zoom. Plan shows all
-three scopes in date order; long-press ordering is reserved for untimed work on
-Today. Deleting a parent takes its whole subtree with it.
+Generated parts carry a `parent` link. Final day parts also carry a `block` —
+the session where their equal daily contribution belongs. Plan is one unified,
+date-ordered list; Month, Week and Day are properties of the generated hierarchy,
+not tabs or choices. Deleting a parent takes its entire subtree with it.
 
 Goals sit alongside, not above: a goal is a name and a deadline, and any task at
 any scope can be tagged to one. Progress is just the share of its tagged tasks
 that are done.
 
-A month and a week also carry a **target date**, picked from a real calendar
-control. Saving one does not drop you back on a list — it opens the next level
-down immediately, because a month is not finished when it is written down, it is
-finished when it has been split. *Save and add another* keeps the sheet on the
-same parent and steps the suggested date on a week (or a day) at a time, so a
-whole month of weeks, or a week of days, goes in without reopening anything.
-Week slots start at the end of the current week unless that has already arrived
-— offering "due today" as the first weekly slot of a month-long plan is worse
-than useless.
-
-The breakdown sheet also offers a one-tap **automatic split**. It uses every
-available date continuously, starting tomorrow (or the task's explicit future
-start date) and ending on the target date. A monthly task becomes as many full
-seven-day week targets as fit, followed by one daily target for each remaining
-date: a target 38 days away therefore becomes 5 weeks + 3 days. Every generated
-week expands into its exact consecutive dates with no gaps. It asks for no child
-details, and names preserve the full hierarchy (`Structural Analysis — Part 1`,
-then `Structural Analysis — Part 1.1`, `Part 1.2`, and so on).
+Breakdown uses every available date continuously, starting tomorrow and ending
+on the selected completion date. Four weeks form one 28-day planning month;
+complete seven-day weeks come next; remaining dates become day parts. A target
+38 days away therefore becomes **1 month + 1 week + 3 days**. Breaking the month
+creates four equal seven-day weeks; breaking a week creates its consecutive day
+tasks. Every final day receives the same estimated contribution minutes and
+session, so both the dates and daily effort are even and gap-free.
 
 Day tasks carry a **description** as well as a name: the title is what it is, the
 description is what to actually do.
@@ -295,8 +282,8 @@ history.
   time instead of deleting the completed work. Tasks and routines can be
   skipped with a reason. Review records reasons, a 0–10 satisfaction score, and
   offers carry destinations only when unfinished tasks exist.
-- **Plan** — Month, Week and Day tabs, each in date order. Includes *Break into
-  weekly* / *Break into daily*, and each parent shows its children inline.
+- **Plan** — one date-ordered task list. Add a date-first task, choose due-date
+  only or regular contribution, and expand the generated hierarchy inline.
 - **Revise** — **subjects** (Computer networks, Structural analysis), each
   holding image cards under a **formula or heading**.
   *Revise all* walks a whole group in one pass rather than interrupting one card
@@ -304,10 +291,9 @@ history.
 - **Settings** — your available hours per session (capacity is the span between
   them), office days, notifications, recall frequency, theme, erase everything.
 
-Plan includes one search field above the Month, Week and Day lists. It searches
-task titles, notes, parent targets and linked goals across all three scopes;
-results keep their scope and date visible and open through the existing Edit
-action. Clearing the query restores the selected Plan tab and its date order.
+Plan includes one search field above the unified list. It searches root tasks,
+their generated month/week/day parts, notes and linked goals. Clearing it restores
+the complete date-ordered list.
 
 ## Reaching a particular date
 
