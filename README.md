@@ -251,6 +251,62 @@ session, so both the dates and daily effort are even and gap-free.
 Day tasks carry a **description** as well as a name: the title is what it is, the
 description is what to actually do.
 
+## Repeating tasks
+
+The other kind of repetition, and the one with a deadline attached: *file GST-1
+before the 11th, every month; GSTR-3B before the 20th*. A routine cannot express
+this — a routine never carries, and a missed statutory return is exactly the
+thing that must.
+
+A **series** is the rule, held in `state.series`. It does not render anywhere in
+Today: it **files ordinary dated day tasks ahead of time** and then stays out of
+the way. Each filed task carries `seriesId` and the `dueDate` the rule aimed at,
+and is otherwise a normal task — it can be skipped, timed, edited, carried,
+completed and counted like any other.
+
+Adding one is the ordinary add-a-task flow plus one question. The date already
+chosen is the first deadline, so **the rule reads itself off it**: 11 August with
+*Every month* becomes "the 11th of every month"; a Friday with *Every week*
+becomes "every Friday". Two numbers refine it — *every N months/weeks*, and
+**days of notice**, which is how "before the 11th" is said: with two days'
+notice the work lands on your 9th and the row still reads *due 11/08/2026*.
+
+```
+series  { id, title, note, minutes, instant, block, at, priority, goalId,
+          unit:'month'|'week', day, days[], every, lead, anchor, until,
+          paused, made:{ '2026-08-11': true, … } }
+task    { …, seriesId, dueDate }
+```
+
+Things worth knowing before changing any of it:
+
+- **`made` is what stops resurrection.** It records every due date the rule has
+  ever filed. Delete an occurrence you do not need and it stays deleted, because
+  the rule already considers that date handled. A second guard scans the tasks
+  actually on the board, because Firebase drops an empty map and a rule that has
+  filed nothing yet comes back with no `made` at all.
+- **Filing runs on every launch and again at midnight**, from `rollForward`.
+  There is no scheduler; the horizon (`HORIZON_DAYS`, 70) simply slides forward
+  whenever the app is opened, so a phone left closed for a month catches up in
+  one pass.
+- **The deadline does not move when the task carries.** A missed occurrence
+  carries like anything else, but `dueDate` stays put, so the row turns from
+  *due 11/08/2026* into *overdue · was due 11/08/2026* rather than quietly
+  redating itself.
+- **Day 31 in a 30-day month is that month's last day**, never the 1st of the
+  next: a monthly deadline never leaves its own month.
+- **Notice never files into the past.** A rule added on the 10th with three
+  days' notice still puts this month's work on today, not on the 8th.
+- **Editing the rule** rewrites every occurrence still open, including one
+  already carrying — a renamed task should not keep its old name because it is
+  late. Changing the *shape* (unit, day, every, lead) withdraws the unfinished
+  occurrences ahead and refiles them from the new rule. **Deleting** the rule
+  takes all its unfinished work with it, late ones included; completed
+  occurrences stay, because they happened.
+- Editing a single filed task from Today or Plan changes **that occurrence
+  only**. The rule lives under **Plan → Repeating**, which lists each rule, its
+  next few dates, and Edit / Pause / Delete.
+
 ## Routines
 
 Kept apart from tasks on purpose. A routine repeats by weekday, is ticked per
@@ -268,7 +324,8 @@ history.
   due (magenta), days with work on them (blue) and days finished clean (ring);
   what is coming up in the next fortnight; progress at all three zooms — today,
   this week, this month — each over its own real window; a weekly planned vs
-  done vs skipped comparison, where postponement clusters and why; then what to
+  done vs skipped comparison, where postponement clusters and why; **Growth**,
+  and out of it *what is working* and *what is holding you back*; then what to
   improve, the week bars, streak and freezes, and weakest recall. A visible
   prompt opens the newest previous-day review still waiting. Every line of
   advice is derived from data you actually entered.
@@ -670,6 +727,39 @@ planned is a rest day and holds it too, a day with work left untouched breaks
 it. `streakSettled` marks the last day ruled on, so a day Review already
 judged is not counted a second time.
 
+## Growth — strengths, weak spots, and what to do about them
+
+The Dashboard's analysis reads four weeks back and never invents a number.
+
+Each of the last 28 days resolves to one record: its **history** entry if the
+day is closed, or the same record derived from its live tasks if it is not, so
+today counts once and is not counted twice. A date nothing was ever asked of
+returns nothing at all and is left out — a rest day is not a failure, and
+averaging it in would say it was.
+
+From those days:
+
+- **Four bars, seven days each, counting back from today.** Bar height is hours
+  of work actually finished; the figure above it is the share of that stretch's
+  tasks completed. Two different questions on purpose — a good percentage on a
+  nearly empty week is not a good week, and the pair shows which one you had.
+- **Sessions and weekdays** are scored from `byBlock` and the day-of-week, and
+  reported only once at least four planned tasks sit behind the number.
+- **Estimation bias** compares recorded actual minutes against the estimate over
+  completed tasks. Five timed tasks minimum; under ±15% is a strength, over +20%
+  or under −25% is a weak spot with a specific correction.
+- **Consistency** is the share of days that asked for something and got
+  something.
+- **Carry debt** is read off live tasks: how many are carrying, how long that
+  is in minutes, and which single task has moved the most times.
+- **Reasons** are counted across the whole four weeks, not this week alone. A
+  pattern needs more than five days to be one.
+
+The same measurements feed *what is working*, *what is holding you back* and
+*what to improve*; a measurement earns a place in one list or the other, never
+both, and only when it is decisively good or bad. The advice lines are
+instructions rather than observations — they name the thing to change and where.
+
 ## Known limits — read before building on this
 
 1. **Offline use starts after the first successful online sign-in.** Google sign-in still
@@ -691,6 +781,14 @@ judged is not counted a second time.
    class of crash when the demo data came out.
 4. **The exam pace figure** assumes goal progress is measured in hours. Adjust if you track
    topics or chapters instead.
+5. **A repeat files 70 days ahead and no further.** That is two or three monthly
+   occurrences, enough for the calendar's next month without burying Plan under
+   a year of identical rows. Anything beyond that arrives the next time the app
+   is opened, so a device left closed for months catches up rather than losing
+   dates — but a rule cannot be used as a long-range archive of future work.
+6. **A repeat has no end date in the UI.** `until` exists in the model and
+   `seriesDueDates` honours it; nothing sets it yet. Pause is the way to stop
+   one without losing it.
 
 ## If you're picking this up in Claude Code
 

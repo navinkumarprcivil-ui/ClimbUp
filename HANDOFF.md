@@ -1,7 +1,11 @@
 # Handoff — where Task2Day stands
 
-Updated for build `2026-08-03.1`. Read this first in a new session; the README has
+Updated for build `2026-08-05.1`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
+
+**New in `2026-08-05.1`:** repeating tasks (`state.series`, `SCHEMA` 6), the
+Dashboard's Growth / strengths / weak-spots analysis, and one fix — Plan's
+date-ordered list was printing no dates at all.
 
 ---
 
@@ -34,7 +38,7 @@ Then record the new URL in this file and in the README.
 Revise`, the dashboard opens on a month calendar with today ringed, and the
 middle session is called **Busy Hours** rather than Office or Noon.
 
-`SCHEMA` is 5 and old data goes through the `MIGRATIONS` ladder. Never bump it
+`SCHEMA` is 6 and old data goes through the `MIGRATIONS` ladder. Never bump it
 without adding the next migration. An unreadable/future snapshot is held for
 download instead of silently replaced.
 
@@ -94,6 +98,8 @@ they are here because they will bite again.
 | Firebase drops empty arrays/objects | A key the user has legitimately emptied comes back **missing**. `loadCloud` refills from `freshState()`. |
 | Firebase authorized domains | Every host the app is served from must be listed, or `signInWithPopup` rejects and the whole app is a dead sign-in screen. Vercel preview URLs are not covered by the production entry. |
 | `index.html`'s outer shell (everything before `<script type="__bundler/manifest">`) | Not part of `build/template.html` — `unpack`/`pack` never touch it. It is the loading screen shown while the ~0.9 MB bundle downloads and unpacks, and it is hand-edited directly in `index.html`; a `pack()` afterwards leaves it alone since `pack()` starts from the on-disk `index.html` and only replaces the `template` island. On a throttled connection it is on screen for 10+ seconds, so what it shows matters — see below. |
+| A repeat rule that forgets what it has filed | `series.made` is a due-date map, and it is the only thing standing between "I deleted that occurrence" and it reappearing on the next launch. Firebase deletes an empty map entirely, so a brand-new rule comes back with no `made` at all — `syncSeries` therefore also scans the tasks on the board (`seriesId@dueDate`) before filing. Remove either guard and repeats duplicate. |
+| Filing occurrences outside `rollForward` | There is no scheduler in this app. `syncSeries` runs from `rollForward`, which runs on mount, after a cloud load, and whenever the clock crosses midnight with the app open. Put filing anywhere else and a device that is merely opened stops catching up. |
 | Auto-split's day formula used to spread points across the *whole* span with rounding | A week task's own span (once dated by the month split) is 8 inclusive calendar days, not 7, because only the month split's non-first parts get their start pushed a day late to stay contiguous — the first part keeps the extra day. Splitting that first part into 7 days with `round(span*i/(n-1))` then skips one real calendar day in the middle (Wed, between Tue and Thu). Fixed by anchoring day parts to the end date and walking back one day at a time (`addDays(end, i-(n-1))`, clamped so it never passes the start) — gap-free by construction, identical output to the old formula whenever the span was already exact. |
 
 ---
@@ -107,6 +113,16 @@ day task has a `block` (keys `morning` / `noon` / `evening`, labelled Morning /
 Busy Hours / Evening), a `date`, and a `note`. Goals remain optional task tags.
 Routines repeat by weekday, are ticked per date, and never carry.
 
+**Repeats** are the other axis, and the one with a deadline: `state.series`
+holds rules ("the 11th of every month, two days' notice"), and `syncSeries`
+files them as ordinary day tasks carrying `seriesId` and `dueDate` up to
+`HORIZON_DAYS` (70) ahead. The rule reads itself off the date already on the
+sheet, so adding one is the normal add-task flow plus one pill row. An
+occurrence carries, skips, times and completes like any other task while its
+`dueDate` stays fixed, which is what turns "due 11/08/2026" into "overdue ·
+was due 11/08/2026" instead of a silently redated task. Rules are managed at
+Plan → Repeating (edit / pause / delete). Full rules in the README.
+
 A day task also carries `carried` (bool) and `carryCount` (number, the row
 reads "carried" at 1 and "carried ×N" above that, with a title tooltip
 spelling it out). `rollForward` — the silent midnight/reopen catch-up — bumps
@@ -118,12 +134,13 @@ the backlog's "Move to tonight" / "Move to Saturday" are each a single
 deliberate user action, so those bump it by a flat +1 instead.
 
 **Screens.** Dashboard (month calendar, coming-up, progress at three zooms,
-weekly planned/done/skipped, session/reason procrastination patterns, pending
+weekly planned/done/skipped, session/reason procrastination patterns, the
+four-week Growth chart with its strengths and weak spots, pending
 past-review prompt, week bars, streak, weakest recall) · Today (routines +
 tasks per session, clock-ordered timed work, long-press order for untimed work,
 actual-minutes completion, task/routine skips, backlog, review with a 0–10
 satisfaction score) · Plan (one date-ordered list, date-first task form,
-intent-driven guided breakdown and tree search) · Daily routine · Revise (topic
+intent-driven guided breakdown, tree search and the Repeating rules) · Daily routine · Revise (topic
 groups, image cards with a pan-and-pinch cropper, "revise all") · Settings
 (editable hours per session — capacity is the span between them — office days,
 notifications, recall frequency, theme, erase everything) · Goals.
@@ -183,9 +200,13 @@ offline and image-queue harness coverage remains intact.
 ## 5. Known limits and likely next steps
 
 - **Weekly/monthly progress is task-count based**, not effort-weighted. Fine
-  now, will feel wrong once tasks vary a lot in size.
-- **No editing of an existing task** — only add and delete. This is the most
-  obvious gap for daily use.
+  now, will feel wrong once tasks vary a lot in size. (The Dashboard's Growth
+  section is the exception — its bars are minutes.)
+- **A repeat has no end date in the UI.** `until` exists in the model and
+  `seriesDueDates` honours it; nothing sets it. Pause is the way to stop a rule
+  without losing it.
+- **Repeats do not notify.** A deadline lands on the right day in the app and
+  nowhere else, for the same reason nothing else here can: no push server.
 - **Notifications cannot fire while the app is closed.** Real alarms need Web
   Push and a server; `sw.js` already handles `notificationclick`, so the client
   half is done.
