@@ -1,9 +1,18 @@
 # Handoff — where Task2Day stands
 
-Updated for build `2026-08-08.1`. Read this first in a new session; the README has
+Updated for build `2026-08-08.2`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
-**New in `2026-08-08.1`:** a live crash fixed — ticking a month/week target
+**New in `2026-08-08.2`:** **skip reasons in your own words** (free text in the
+skip sheet and the evening review; a chip fills the box instead of closing the
+sheet); a **daily log** screen — the day-by-day account of what was finished,
+what was kept and what did not happen with the reason quoted, from the
+Dashboard or Settings; **Settings is a bottom-nav destination** rather than a
+gear on the Dashboard; and Today gained **time used against planned for every
+session**, including empty ones. No schema change — the log is a view over
+records the app already kept.
+
+**In `2026-08-08.1`:** a live crash fixed — ticking a month/week target
 straight off Plan wrote `actual: undefined` onto the task, and one undefined
 anywhere in the tree makes Firebase reject the **entire** update, so every
 later change stopped syncing. Fixed at the source and again at the wire:
@@ -171,7 +180,8 @@ deliberate user action, so those bump it by a flat +1 instead.
 work, and the analysis is something you go and look at. Back walks to Today
 before offering to leave, and the add button lives on the Dashboard and Plan.
 
-**Screens.** Dashboard (month calendar, coming-up, progress at three zooms,
+**Screens.** Log (every day, newest first: finished with real times, routines
+kept, and what slipped with the reason as written) · Dashboard (month calendar, coming-up, progress at three zooms,
 weekly planned/done/skipped, session/reason procrastination patterns, the
 four-week Growth chart with its strengths and weak spots, pending
 past-review prompt, week bars, streak, weakest recall) · Today (routines +
