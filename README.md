@@ -222,6 +222,39 @@ day. The Dashboard points to the newest unreviewed past day so its missing
 reasons and 0–10 satisfaction score can be filled later; completing that review
 updates the existing history record without carrying the tasks a second time.
 
+## The daily log
+
+The Dashboard answers *how am I doing*. The log answers *what actually
+happened on the 14th*, which is a different question and the one you ask when
+a figure surprises you.
+
+It is written from two sources, because neither is complete alone: the day's
+**history record** holds the counts, the skip reasons and the satisfaction
+score, while the **live task list** is the only place the titles survive —
+completed tasks stay on their own date for exactly this reason. Nothing in it
+is inferred; every line is something the app was told.
+
+Each day collapses to a headline (finished of planned, hours, how it felt) and
+opens into three parts: what was **finished**, with the time it really took
+against the estimate; **routines kept**, with their recorded minutes; and what
+**did not happen and why**, quoting the reason in the words it was written in.
+A day that asked nothing of you says so rather than counting as a failure.
+120 days are kept in view. Reachable from the Dashboard, from Settings, and
+each entry can open that day for review.
+
+## Skip reasons in your own words
+
+The chips are the common cases, not the only ones. Both the skip sheet and the
+evening review take free text, and a chip now **fills the box** rather than
+closing the sheet, so it can be used as a starting point and edited. A list
+that cannot hold "power cut on site" collects "Something came up", which tells
+you nothing three weeks later — and the reason is what the whole
+weakness analysis is built on.
+
+Nothing downstream needed changing: `pickReason` and `skipTask` have always
+stored a plain string, and the Dashboard counts reasons by value, so a typed
+reason groups with itself across days exactly as a chip does.
+
 ## Where the app opens, and where you add from
 
 **Task2Day opens on Today.** The app is for doing the day's work; the Dashboard
@@ -389,7 +422,15 @@ exactly what that number is for.
   your week rather than your day: name, description, session, minutes and which
   weekdays. Today only points at it — *Add a daily routine* while none is set,
   a quieter *Edit daily routine* once one is.
-- **Today** — that day's tasks only, grouped into Morning / Busy Hours / Evening,
+- **Today** — that day's tasks only, grouped into Morning / Busy Hours / Evening.
+  Under the day's two tiles sits **time used against planned, for every
+  session** — including the ones with nothing in them. The tiles are the whole
+  day and the session cards below only appear where there is work, so a day
+  whose only work is in the morning used to show one card and read as if the
+  day figure *were* the morning's. "Used" is real time: the recorded actual
+  where there is one, the estimate where the work is done but was never timed.
+  Capacity sits beside it, because being under your plan and over your hours
+  are different problems.
   timed tasks in clock order and **press and hold to order untimed tasks**.
   Marking a task done asks for actual minutes; the capacity bar then uses actual
   time instead of deleting the completed work. Tasks and routines can be
@@ -403,8 +444,11 @@ exactly what that number is for.
   holding image cards under a **formula or heading**.
   *Revise all* walks a whole group in one pass rather than interrupting one card
   at a time. Intervals stretch 1 → 3 → 7 → 21 → 45 days.
-- **Settings** — your available hours per session (capacity is the span between
-  them), office days, notifications, recall frequency, theme, erase everything.
+- **Log** — the day-by-day account, reached from the Dashboard or Settings.
+- **Settings** — a **bottom-nav destination**, not a gear on one screen: your
+  available hours per session (capacity is the span between them), office days,
+  badges, the daily routine, notifications, recall frequency, theme, erase
+  everything.
 
 Plan includes one search field above the unified list. It searches root tasks,
 their generated month/week/day parts, notes and linked goals. Clearing it restores
