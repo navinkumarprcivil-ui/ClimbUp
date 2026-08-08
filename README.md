@@ -222,6 +222,23 @@ day. The Dashboard points to the newest unreviewed past day so its missing
 reasons and 0–10 satisfaction score can be filled later; completing that review
 updates the existing history record without carrying the tasks a second time.
 
+## Deleting asks first
+
+Every destructive action goes through one dialog: tasks and their breakdowns,
+badges, repeat rules, routines, goals, subjects and cards. It names the thing
+and says **what goes with it** — the count of children under a task, the tasks
+a badge will be unfiled from, the unfinished occurrences a repeat takes — since
+"Delete?" answered honestly needs the consequence, not just the verb.
+
+Undo stays where it already was. The two answer different mistakes: the dialog
+catches the tap you did not mean, undo catches the decision you regret ten
+seconds later. An undo you never noticed is no protection at all, which is why
+it was not enough on its own.
+
+The one thing that does **not** go through it is *Erase everything* in Settings,
+which has always had its own inline confirmation, and skip/complete actions,
+which are reversible in place.
+
 ## The daily log
 
 The Dashboard answers *how am I doing*. The log answers *what actually
