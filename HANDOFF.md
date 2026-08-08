@@ -1,9 +1,25 @@
 # Handoff — where Task2Day stands
 
-Updated for build `2026-08-05.1`. Read this first in a new session; the README has
+Updated for build `2026-08-07.2`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
-**New in `2026-08-05.1`:** repeating tasks (`state.series`, `SCHEMA` 6), the
+**New in `2026-08-07.2`:** a real **desktop layout** at ≥900px — full-window
+shell, the bottom nav stood up into a left rail, bottom sheets as centred
+dialogs, row actions laid horizontally, Escape to close. No schema change; it
+is CSS over the same DOM, hanging on three new classes (`.month-grid`,
+`.row-actions`, `.sheet-panel`). Add a sheet or a row without its class and it
+keeps its phone shape on a monitor.
+
+**In `2026-08-07.1`** (`SCHEMA` 7): badges (`state.badges`, a `badgeId` on
+tasks and repeat rules, chips that filter Plan); the app now **opens on Today**
+with the nav reading `Today · Dashboard · Plan · Revise`; a **+ on the
+Dashboard** as well as Plan; **durations are no longer invented** — the minutes
+field starts empty and the sheet refuses to save without one or without
+*Instant*; **routines with a duration ask how long they took**, stored in a
+date-keyed `actual` map and fed into the Dashboard's hours and estimate-accuracy
+figures; and Plan now **sinks completed work to the bottom**.
+
+**In `2026-08-05.1`** (`SCHEMA` 6): repeating tasks (`state.series`), the
 Dashboard's Growth / strengths / weak-spots analysis, and one fix — Plan's
 date-ordered list was printing no dates at all.
 
@@ -34,11 +50,12 @@ of them:
 
 Then record the new URL in this file and in the README.
 
-**It has landed when:** the bottom nav reads `Dashboard · Today · Plan ·
-Revise`, the dashboard opens on a month calendar with today ringed, and the
-middle session is called **Busy Hours** rather than Office or Noon.
+**It has landed when:** the app opens on **Today**, the bottom nav reads
+`Today · Dashboard · Plan · Revise`, the add sheet asks for a **Badge** and
+leaves the minutes box empty, and Plan carries a **Repeating** section under its
+list.
 
-`SCHEMA` is 6 and old data goes through the `MIGRATIONS` ladder. Never bump it
+`SCHEMA` is 7 and old data goes through the `MIGRATIONS` ladder. Never bump it
 without adding the next migration. An unreadable/future snapshot is held for
 download instead of silently replaced.
 
@@ -98,6 +115,10 @@ they are here because they will bite again.
 | Firebase drops empty arrays/objects | A key the user has legitimately emptied comes back **missing**. `loadCloud` refills from `freshState()`. |
 | Firebase authorized domains | Every host the app is served from must be listed, or `signInWithPopup` rejects and the whole app is a dead sign-in screen. Vercel preview URLs are not covered by the production entry. |
 | `index.html`'s outer shell (everything before `<script type="__bundler/manifest">`) | Not part of `build/template.html` — `unpack`/`pack` never touch it. It is the loading screen shown while the ~0.9 MB bundle downloads and unpacks, and it is hand-edited directly in `index.html`; a `pack()` afterwards leaves it alone since `pack()` starts from the on-disk `index.html` and only replaces the `template` island. On a throttled connection it is on screen for 10+ seconds, so what it shows matters — see below. |
+| A new sheet or row that keeps its phone shape on a desktop | The desktop rules hang on `.review-sheet` / `.sheet-panel`, `.row-actions` and `.month-grid`. Markup added without the matching class is not styled by them — it will look right on a phone and wrong on a monitor, which is the order nobody checks in. |
+| A badge colour stored as a hex value | It cannot be: the same badge needs a different ink in light and dark. `tone` is an index into `BADGE_TONES` and resolves to `--card-*` / `--ink-*` tokens at render time. |
+| Deleting a badge, group or label taking the work with it | `deleteBadge` unfiles its tasks (`badgeId:''`) and keeps every one of them. A label is not the work. Deleting a *parent task* is the one place a subtree is genuinely removed. |
+| A pre-filled duration | The minutes field starts empty and the save is refused without one. A default 45 flowed into capacity, progress percentages and estimate accuracy as though the user had chosen it, which made the accuracy figure measure its own input. For the same reason the completion sheet no longer pre-fills the actual with the estimate. |
 | A repeat rule that forgets what it has filed | `series.made` is a due-date map, and it is the only thing standing between "I deleted that occurrence" and it reappearing on the next launch. Firebase deletes an empty map entirely, so a brand-new rule comes back with no `made` at all — `syncSeries` therefore also scans the tasks on the board (`seriesId@dueDate`) before filing. Remove either guard and repeats duplicate. |
 | Filing occurrences outside `rollForward` | There is no scheduler in this app. `syncSeries` runs from `rollForward`, which runs on mount, after a cloud load, and whenever the clock crosses midnight with the app open. Put filing anywhere else and a device that is merely opened stops catching up. |
 | Auto-split's day formula used to spread points across the *whole* span with rounding | A week task's own span (once dated by the month split) is 8 inclusive calendar days, not 7, because only the month split's non-first parts get their start pushed a day late to stay contiguous — the first part keeps the extra day. Splitting that first part into 7 days with `round(span*i/(n-1))` then skips one real calendar day in the middle (Wed, between Tue and Thu). Fixed by anchoring day parts to the end date and walking back one day at a time (`addDays(end, i-(n-1))`, clamped so it never passes the start) — gap-free by construction, identical output to the old formula whenever the span was already exact. |
@@ -112,6 +133,12 @@ which derives `month | week | day` descendants through `parent` links. A final
 day task has a `block` (keys `morning` / `noon` / `evening`, labelled Morning /
 Busy Hours / Evening), a `date`, and a `note`. Goals remain optional task tags.
 Routines repeat by weekday, are ticked per date, and never carry.
+
+**Badges** (`state.badges`) are the cross-cutting label — Personal, Office,
+Study, a client — carried by tasks and repeat rules as `badgeId`, added from the
+add sheet itself, removed in Settings, and used as Plan's filter chips. Colour
+is an index into `BADGE_TONES`, never a stored hex, so both themes resolve it
+themselves. A new task inherits whichever badge Plan is filtered to.
 
 **Repeats** are the other axis, and the one with a deadline: `state.series`
 holds rules ("the 11th of every month, two days' notice"), and `syncSeries`
@@ -132,6 +159,10 @@ and reopened once still reads "carried ×7" rather than under-reporting it as
 once. The evening review's "Carry to tomorrow" / "Batch onto the weekend" and
 the backlog's "Move to tonight" / "Move to Saturday" are each a single
 deliberate user action, so those bump it by a flat +1 instead.
+
+**Opening screen is Today**, not the Dashboard — the app is for doing the day's
+work, and the analysis is something you go and look at. Back walks to Today
+before offering to leave, and the add button lives on the Dashboard and Plan.
 
 **Screens.** Dashboard (month calendar, coming-up, progress at three zooms,
 weekly planned/done/skipped, session/reason procrastination patterns, the

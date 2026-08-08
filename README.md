@@ -222,6 +222,20 @@ day. The Dashboard points to the newest unreviewed past day so its missing
 reasons and 0–10 satisfaction score can be filled later; completing that review
 updates the existing history record without carrying the tasks a second time.
 
+## Where the app opens, and where you add from
+
+**Task2Day opens on Today.** The app is for doing the day's work; the Dashboard
+is a thing you go and look at when you want to know how it is going. The bottom
+nav reads `Today · Dashboard · Plan · Revise` for the same reason, and the back
+button walks to Today before a second press offers to leave.
+
+The **+ button sits on both the Dashboard and Plan**. The add sheet settles
+everything itself — date first, then whether the task is a single day or a
+breakable target — so it does not matter which screen it is opened from; Plan is
+where work is organised, and the Dashboard is where you most often think of
+something. Today keeps its own **+** in the header, which arrives pre-dated to
+whichever day you are looking at.
+
 ## The model
 
 The user never selects Month, Week or Day. Every new task starts with one date
@@ -250,6 +264,40 @@ session, so both the dates and daily effort are even and gap-free.
 
 Day tasks carry a **description** as well as a name: the title is what it is, the
 description is what to actually do.
+
+**Durations are never invented.** The minutes field starts empty and the sheet
+refuses to save without a real figure, or without *Instant* — which is the
+honest way to say "this takes no time". A pre-filled 45 was a number nobody
+chose, and it went straight into session capacity, the progress percentage and
+the estimate-accuracy figures as though someone had.
+
+## Badges
+
+The label answering "which part of my life is this?" — your own work, the
+office, a course, a client. Goals are a horizon you are aiming at and most
+tasks have none; a badge is a filing cabinet and most tasks want one, which is
+why the picker sits at the **top** of the add sheet rather than the bottom.
+
+`state.badges` is `{id, name, tone}`. Colour is stored as an **index into
+`BADGE_TONES`, never as a hex value**: the light and dark themes need different
+inks for the same badge, and a token resolves per theme while a stored colour
+cannot. Tasks and repeat rules carry `badgeId`.
+
+- New badges can be added **from the add sheet itself** — a category you think
+  of while filing a task should not cost a trip to Settings. Settings → Badges
+  is where they are removed, and shows how many tasks and repeats use each.
+- **Deleting a badge unfiles its tasks; it never deletes them.** A label is not
+  the work.
+- Plan has a chip row that **filters** by badge, each chip carrying the number
+  still open under it. A parent whose own badge is unset still shows when one of
+  its generated parts carries the badge — filtering a tree on its root alone
+  would hide work that does match.
+- A new task **inherits the badge Plan is currently filtered to**, so filing
+  five office tasks in a row asks the question once.
+- Three badges (Personal, Office, Study) ship with a new account so the picker
+  is never an empty row. They are ordinary badges and can be deleted — but note
+  that emptying the list completely restores them on the next load, because
+  Firebase deletes an empty array and `freshState()` refills it.
 
 ## Repeating tasks
 
@@ -318,9 +366,17 @@ Done and skipped routines are mutually exclusive per date. A skipped or simply
 missed routine appears in that day's review and its reason is retained in day
 history.
 
+A routine with a duration is **measured like anything else with one**: ticking
+it opens the same "how long did it take?" sheet a task does, and the answer is
+stored in `actual`, a date-keyed map beside `done`. Un-ticking clears that
+date's record with it. Those minutes reach the Dashboard through
+`routineDoneMinutes` in day history, and each recorded date also counts toward
+the estimate-accuracy figure — an hour at the gym that always runs to ninety is
+exactly what that number is for.
+
 ## Screens
 
-- **Dashboard** — the home page. A real month calendar marking targets falling
+- **Dashboard** — a real month calendar marking targets falling
   due (magenta), days with work on them (blue) and days finished clean (ring);
   what is coming up in the next fortnight; progress at all three zooms — today,
   this week, this month — each over its own real window; a weekly planned vs
@@ -339,8 +395,10 @@ history.
   time instead of deleting the completed work. Tasks and routines can be
   skipped with a reason. Review records reasons, a 0–10 satisfaction score, and
   offers carry destinations only when unfinished tasks exist.
-- **Plan** — one date-ordered task list. Add a date-first task, choose due-date
-  only or regular contribution, and expand the generated hierarchy inline.
+- **Plan** — one task list, **unfinished first and date-ordered**, with
+  completed work sunk to the bottom in its own date order. Badge chips filter
+  it. Add a date-first task, choose due-date only or regular contribution, and
+  expand the generated hierarchy inline.
 - **Revise** — **subjects** (Computer networks, Structural analysis), each
   holding image cards under a **formula or heading**.
   *Revise all* walks a whole group in one pass rather than interrupting one card
@@ -561,15 +619,52 @@ must change all five, or something ends up floating.
 baked into it — the inset is the hardware's home indicator, not padding of
 ours.
 
-## Layout — phone vs desktop
+## Layout — phone, tablet, desktop
 
-The app renders **edge to edge on a phone** and inside a drawn iPhone frame on a
-wide screen. Both come out of the same markup; the switch is one media query in
-the `<helmet>` style block:
+One markup tree, three shapes, decided by two media queries in the `<helmet>`
+style block:
+
+| Width | Shape |
+| --- | --- |
+| ≤ 560px, or any installed PWA | Edge to edge. The real phone. |
+| 561–899px | The drawn 390×844 frame — a presentation device, not the app. |
+| ≥ 900px | Desktop: full window, nav rail down the left, centred dialogs. |
 
 ```
 @media (max-width: 560px), (display-mode: standalone) { ... }
+@media (min-width: 900px) { ... }
 ```
+
+### Desktop
+
+At 900px the frame stops reading as a deliberate presentation and starts
+reading as a small picture of an app in a large empty room, so:
+
+- the shell goes edge to edge and the drawn notch is hidden;
+- the **bottom nav stands up into a 232px left rail** — same buttons, same
+  order, laid horizontally with room for their labels, with hover and a filled
+  current item;
+- content sits beside the rail in a centred **860px column**, which keeps a
+  line of prose one line of prose however wide the window is. The month grid
+  caps at 520px inside it, because square day cells stretched across the full
+  column turn the month into a wall of 140px tiles;
+- **bottom sheets become centred dialogs.** A sheet rising from the bottom edge
+  is a thumb affordance and means nothing under a mouse. `align-self:center`
+  is what overrules the overlay's inline `place-items:end center`;
+- **row actions lie down.** Skip / Focus / Edit / Delete stack vertically to
+  stay narrow under a thumb; with a desktop row to spend, stacking them made
+  every task 150px tall for nothing;
+- the **+** moves to the bottom-right corner, and **Escape closes** whatever is
+  open — routed through the same handler the phone's back button uses, but only
+  while something *is* open, so Escape on a bare screen never raises "leave the
+  app?" out of nowhere.
+
+Everything above is CSS over the same DOM. The layout is written in inline
+styles, so these rules carry `!important` where they must beat one: a deliberate
+cost, paid once, rather than a second markup tree to keep in step with the
+first. The classes they hang on — `.month-grid`, `.row-actions`, `.sheet-panel`
+— exist only for this; if you add a sheet or a row, give it the matching class
+or it will keep its phone shape on a 27-inch monitor.
 
 Under it the shell drops its padding, `.app` goes `100dvh` with no radius or
 shadow, and `.device-chrome` — the drawn notch, clock, "5G" and battery — is
