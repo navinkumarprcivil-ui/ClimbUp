@@ -345,12 +345,25 @@ the way. Each filed task carries `seriesId` and the `dueDate` the rule aimed at,
 and is otherwise a normal task — it can be skipped, timed, edited, carried,
 completed and counted like any other.
 
-Adding one is the ordinary add-a-task flow plus one question. The date already
-chosen is the first deadline, so **the rule reads itself off it**: 11 August with
-*Every month* becomes "the 11th of every month"; a Friday with *Every week*
-becomes "every Friday". Two numbers refine it — *every N months/weeks*, and
-**days of notice**, which is how "before the 11th" is said: with two days'
-notice the work lands on your 9th and the row still reads *due 11/08/2026*.
+Adding one is the ordinary add-a-task flow plus one question — *Does it come
+back?* — answered with **Just once · Every day · Every week · Every month**. The
+date already chosen is the first deadline, so **the rule reads itself off it**:
+11 August with *Every month* becomes "the 11th of every month"; a Friday with
+*Every week* becomes "every Friday". Three fields refine it:
+
+- **every N days / weeks / months** — every third day, every other Monday, every
+  quarter;
+- **days of notice** — how "before the 11th" is said: with two days' notice the
+  work lands on your 9th and the row still reads *due 11/08/2026*;
+- **repeat until** — the date the rule stops. Empty means no end, which is what
+  every rule written before the field existed meant, so it stays the default. A
+  rule past its end date says *Finished* in Plan rather than disappearing.
+
+**A daily repeat is not a routine.** They look alike and are opposites: a
+routine is a rhythm that never carries and owes you nothing when missed; a daily
+repeat is work with a deadline, so a missed one carries and counts. The sheet
+says so when *Every day* is picked, because choosing wrong is how you end up
+with a fortnight of unfinished gym sessions on one Tuesday.
 
 ```
 series  { id, title, note, minutes, instant, block, at, priority, goalId,
@@ -361,6 +374,10 @@ task    { …, seriesId, dueDate }
 
 Things worth knowing before changing any of it:
 
+- **`until` is enforced in `seriesDueDates`, and must not be blanked anywhere
+  else.** It shipped as a model-only field, so `createSeries` used to overwrite
+  it with `''` after building the rule — a rule with a stop date ran forever and
+  the only visible symptom was work that would not stop arriving.
 - **`made` is what stops resurrection.** It records every due date the rule has
   ever filed. Delete an occurrence you do not need and it stays deleted, because
   the rule already considers that date handled. A second guard scans the tasks
@@ -930,9 +947,10 @@ instructions rather than observations — they name the thing to change and wher
    a year of identical rows. Anything beyond that arrives the next time the app
    is opened, so a device left closed for months catches up rather than losing
    dates — but a rule cannot be used as a long-range archive of future work.
-6. **A repeat has no end date in the UI.** `until` exists in the model and
-   `seriesDueDates` honours it; nothing sets it yet. Pause is the way to stop
-   one without losing it.
+6. **A daily rule fills its 24-occurrence budget in 24 days**, not 70, because
+   `MAX_OCCURRENCES` bites long before `HORIZON_DAYS`. That is the intended
+   brake — filing seventy identical rows would bury Plan — but it means a daily
+   repeat needs the app opened at least monthly to keep its horizon ahead.
 
 ## If you're picking this up in Claude Code
 
