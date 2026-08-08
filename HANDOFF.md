@@ -1,9 +1,15 @@
 # Handoff — where Task2Day stands
 
-Updated for build `2026-08-08.2`. Read this first in a new session; the README has
+Updated for build `2026-08-09.1`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
-**New in `2026-08-08.2`:** **skip reasons in your own words** (free text in the
+**New in `2026-08-09.1`:** repeats gained **Every day** (with every-N-days) and
+a **Repeat until** date, and one bug went with them — `createSeries` overwrote
+`until` with `''` after building the rule, so a stop date was thrown away and
+the rule ran forever. No schema change; `until` and the unit have been in the
+model since `SCHEMA` 6.
+
+**In `2026-08-08.2`:** **skip reasons in your own words** (free text in the
 skip sheet and the evening review; a chip fills the box instead of closing the
 sheet); a **daily log** screen — the day-by-day account of what was finished,
 what was kept and what did not happen with the reason quoted, from the
@@ -135,6 +141,7 @@ they are here because they will bite again.
 | A badge colour stored as a hex value | It cannot be: the same badge needs a different ink in light and dark. `tone` is an index into `BADGE_TONES` and resolves to `--card-*` / `--ink-*` tokens at render time. |
 | Deleting a badge, group or label taking the work with it | `deleteBadge` unfiles its tasks (`badgeId:''`) and keeps every one of them. A label is not the work. Deleting a *parent task* is the one place a subtree is genuinely removed. |
 | A pre-filled duration | The minutes field starts empty and the save is refused without one. A default 45 flowed into capacity, progress percentages and estimate accuracy as though the user had chosen it, which made the accuracy figure measure its own input. For the same reason the completion sheet no longer pre-fills the actual with the estimate. |
+| A field that exists in the model before it exists in the UI | `until` was honoured by `seriesDueDates` from the start, and `createSeries` blanked it immediately after building the rule — harmless while nothing could set it, a silent data loss the day the input appeared. When you give a stored field a control, grep for every place that writes the field, not just the place that reads it. |
 | A repeat rule that forgets what it has filed | `series.made` is a due-date map, and it is the only thing standing between "I deleted that occurrence" and it reappearing on the next launch. Firebase deletes an empty map entirely, so a brand-new rule comes back with no `made` at all — `syncSeries` therefore also scans the tasks on the board (`seriesId@dueDate`) before filing. Remove either guard and repeats duplicate. |
 | Filing occurrences outside `rollForward` | There is no scheduler in this app. `syncSeries` runs from `rollForward`, which runs on mount, after a cloud load, and whenever the clock crosses midnight with the app open. Put filing anywhere else and a device that is merely opened stops catching up. |
 | Auto-split's day formula used to spread points across the *whole* span with rounding | A week task's own span (once dated by the month split) is 8 inclusive calendar days, not 7, because only the month split's non-first parts get their start pushed a day late to stay contiguous — the first part keeps the extra day. Splitting that first part into 7 days with `round(span*i/(n-1))` then skips one real calendar day in the middle (Wed, between Tue and Thu). Fixed by anchoring day parts to the end date and walking back one day at a time (`addDays(end, i-(n-1))`, clamped so it never passes the start) — gap-free by construction, identical output to the old formula whenever the span was already exact. |
@@ -155,6 +162,10 @@ Study, a client — carried by tasks and repeat rules as `badgeId`, added from t
 add sheet itself, removed in Settings, and used as Plan's filter chips. Colour
 is an index into `BADGE_TONES`, never a stored hex, so both themes resolve it
 themselves. A new task inherits whichever badge Plan is filtered to.
+
+**Repeats** offer **Just once · Every day · Every week · Every month**, each
+with every-N, days of notice, and an optional end date. A daily repeat is
+deliberately not a routine: it carries when missed, and the sheet says so.
 
 **Repeats** are the other axis, and the one with a deadline: `state.series`
 holds rules ("the 11th of every month, two days' notice"), and `syncSeries`
