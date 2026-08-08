@@ -1,9 +1,16 @@
 # Handoff — where Task2Day stands
 
-Updated for build `2026-08-07.1`. Read this first in a new session; the README has
+Updated for build `2026-08-07.2`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
-**New in `2026-08-07.1`** (`SCHEMA` 7): badges (`state.badges`, a `badgeId` on
+**New in `2026-08-07.2`:** a real **desktop layout** at ≥900px — full-window
+shell, the bottom nav stood up into a left rail, bottom sheets as centred
+dialogs, row actions laid horizontally, Escape to close. No schema change; it
+is CSS over the same DOM, hanging on three new classes (`.month-grid`,
+`.row-actions`, `.sheet-panel`). Add a sheet or a row without its class and it
+keeps its phone shape on a monitor.
+
+**In `2026-08-07.1`** (`SCHEMA` 7): badges (`state.badges`, a `badgeId` on
 tasks and repeat rules, chips that filter Plan); the app now **opens on Today**
 with the nav reading `Today · Dashboard · Plan · Revise`; a **+ on the
 Dashboard** as well as Plan; **durations are no longer invented** — the minutes
@@ -108,6 +115,7 @@ they are here because they will bite again.
 | Firebase drops empty arrays/objects | A key the user has legitimately emptied comes back **missing**. `loadCloud` refills from `freshState()`. |
 | Firebase authorized domains | Every host the app is served from must be listed, or `signInWithPopup` rejects and the whole app is a dead sign-in screen. Vercel preview URLs are not covered by the production entry. |
 | `index.html`'s outer shell (everything before `<script type="__bundler/manifest">`) | Not part of `build/template.html` — `unpack`/`pack` never touch it. It is the loading screen shown while the ~0.9 MB bundle downloads and unpacks, and it is hand-edited directly in `index.html`; a `pack()` afterwards leaves it alone since `pack()` starts from the on-disk `index.html` and only replaces the `template` island. On a throttled connection it is on screen for 10+ seconds, so what it shows matters — see below. |
+| A new sheet or row that keeps its phone shape on a desktop | The desktop rules hang on `.review-sheet` / `.sheet-panel`, `.row-actions` and `.month-grid`. Markup added without the matching class is not styled by them — it will look right on a phone and wrong on a monitor, which is the order nobody checks in. |
 | A badge colour stored as a hex value | It cannot be: the same badge needs a different ink in light and dark. `tone` is an index into `BADGE_TONES` and resolves to `--card-*` / `--ink-*` tokens at render time. |
 | Deleting a badge, group or label taking the work with it | `deleteBadge` unfiles its tasks (`badgeId:''`) and keeps every one of them. A label is not the work. Deleting a *parent task* is the one place a subtree is genuinely removed. |
 | A pre-filled duration | The minutes field starts empty and the save is refused without one. A default 45 flowed into capacity, progress percentages and estimate accuracy as though the user had chosen it, which made the accuracy figure measure its own input. For the same reason the completion sheet no longer pre-fills the actual with the estimate. |

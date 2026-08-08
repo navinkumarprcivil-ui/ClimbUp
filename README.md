@@ -619,15 +619,52 @@ must change all five, or something ends up floating.
 baked into it — the inset is the hardware's home indicator, not padding of
 ours.
 
-## Layout — phone vs desktop
+## Layout — phone, tablet, desktop
 
-The app renders **edge to edge on a phone** and inside a drawn iPhone frame on a
-wide screen. Both come out of the same markup; the switch is one media query in
-the `<helmet>` style block:
+One markup tree, three shapes, decided by two media queries in the `<helmet>`
+style block:
+
+| Width | Shape |
+| --- | --- |
+| ≤ 560px, or any installed PWA | Edge to edge. The real phone. |
+| 561–899px | The drawn 390×844 frame — a presentation device, not the app. |
+| ≥ 900px | Desktop: full window, nav rail down the left, centred dialogs. |
 
 ```
 @media (max-width: 560px), (display-mode: standalone) { ... }
+@media (min-width: 900px) { ... }
 ```
+
+### Desktop
+
+At 900px the frame stops reading as a deliberate presentation and starts
+reading as a small picture of an app in a large empty room, so:
+
+- the shell goes edge to edge and the drawn notch is hidden;
+- the **bottom nav stands up into a 232px left rail** — same buttons, same
+  order, laid horizontally with room for their labels, with hover and a filled
+  current item;
+- content sits beside the rail in a centred **860px column**, which keeps a
+  line of prose one line of prose however wide the window is. The month grid
+  caps at 520px inside it, because square day cells stretched across the full
+  column turn the month into a wall of 140px tiles;
+- **bottom sheets become centred dialogs.** A sheet rising from the bottom edge
+  is a thumb affordance and means nothing under a mouse. `align-self:center`
+  is what overrules the overlay's inline `place-items:end center`;
+- **row actions lie down.** Skip / Focus / Edit / Delete stack vertically to
+  stay narrow under a thumb; with a desktop row to spend, stacking them made
+  every task 150px tall for nothing;
+- the **+** moves to the bottom-right corner, and **Escape closes** whatever is
+  open — routed through the same handler the phone's back button uses, but only
+  while something *is* open, so Escape on a bare screen never raises "leave the
+  app?" out of nowhere.
+
+Everything above is CSS over the same DOM. The layout is written in inline
+styles, so these rules carry `!important` where they must beat one: a deliberate
+cost, paid once, rather than a second markup tree to keep in step with the
+first. The classes they hang on — `.month-grid`, `.row-actions`, `.sheet-panel`
+— exist only for this; if you add a sheet or a row, give it the matching class
+or it will keep its phone shape on a 27-inch monitor.
 
 Under it the shell drops its padding, `.app` goes `100dvh` with no radius or
 shadow, and `.device-chrome` — the drawn notch, clock, "5G" and battery — is
