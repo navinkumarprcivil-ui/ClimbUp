@@ -1,9 +1,14 @@
 # Handoff — where Task2Day stands
 
-Updated for build `2026-08-09.1`. Read this first in a new session; the README has
+Updated for build `2026-08-09.2`. Read this first in a new session; the README has
 the architecture, this has the state and the traps.
 
-**New in `2026-08-09.1`:** repeats gained **Every day** (with every-N-days) and
+**New in `2026-08-09.2`:** **every deletion asks first** — tasks, badges,
+repeat rules, routines, goals, subjects and cards all route through one
+`confirmDelete` dialog that names the thing and states what goes with it.
+Existing undo stays. No schema change.
+
+**In `2026-08-09.1`:** repeats gained **Every day** (with every-N-days) and
 a **Repeat until** date, and one bug went with them — `createSeries` overwrote
 `until` with `''` after building the rule, so a stop date was thrown away and
 the rule ran forever. No schema change; `until` and the unit have been in the
