@@ -864,6 +864,11 @@ instructions rather than observations — they name the thing to change and wher
    `MIGRATIONS` ladder upgrades older snapshots. Note Firebase stores no empty arrays or objects
    at all (it deletes the key), so anything the user has legitimately emptied comes back missing
    and is refilled from `freshState()` on load.
+   Nothing in the payload may be `undefined`: `update()` rejects the whole write when any value
+   in the tree is, so a single stray property stops every later save with nothing but a console
+   error to show for it. `persistedPayload` runs `stripUndefined` over the payload as the last
+   gate, and code that builds a task should set a key only when it has a value — `{...x,
+   actual:x.actual}` on a task with no `actual` is exactly the shape that broke it in the wild.
    *(Note: `componentDidUpdate` is called by the DC runtime with `prevProps` only — there is no
    `prevState` argument. Comparing against one throws inside a runtime `try/catch`, which
    silently disables the save. Track previous values yourself; see the comment on that method.)*
